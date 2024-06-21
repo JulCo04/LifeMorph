@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Sidebar from '../components/Sidebar';
+import APTitleBar from '../components/APTitleBar';
 
 const DashboardPage: React.FC = () => {
-    
+
     return (
-        <div className="page-container">
-            <p>DashboardPage</p>
+        <div className='flex'>
+            <Sidebar />
+            <APTitleBar title="Dashboard"/>
         </div>
+        
     );
 };
 

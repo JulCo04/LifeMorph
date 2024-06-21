@@ -1,11 +1,16 @@
-import React from 'react';
+import { useState } from 'react';
+import Sidebar from '../components/Sidebar';
+import APTitleBar from '../components/APTitleBar';
 
-const FinancePage: React.FC = () => {
+const DashboardPage: React.FC = () => {
+    
     return (
-        <div className="page-container">
-            <p>FinancePage</p>
+        <div className='flex'>
+            <Sidebar />
+            <APTitleBar title="Finances"/>
         </div>
+        
     );
 };
 
-export default FinancePage;
+export default DashboardPage;

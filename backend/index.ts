@@ -28,6 +28,17 @@ pool.getConnection()
 app.use(express.json());
 app.use(cors()); // Enable CORS for all routes
 
+// Display all Goals
+app.get('/api/goals', async (req: Request, res: Response) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM goals');
+    console.log(rows);
+    res.json(rows);
+  } catch (error: any) {
+    console.error('Error querying the database:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Display all Users
 app.get('/api/users', async (req: Request, res: Response) => {

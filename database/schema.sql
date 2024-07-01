@@ -9,4 +9,18 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-SELECT * FROM users;
+CREATE TABLE IF NOT EXISTS goals (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  goalName VARCHAR(255) NOT NULL,
+  category VARCHAR(255) NOT NULL,
+  description TEXT,
+  endDate DATE NOT NULL,
+  repetition INT NOT NULL,
+  dateOfRepetition DATE,
+  goalType INT NOT NULL,
+  completed INT NOT NULL,
+  steps JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+SELECT * FROM goals;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import './App.css';
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -14,6 +14,7 @@ import ResetPassPage from './pages/ResetPassPage';
 import SettingsPage from './pages/SettingsPage';
 import TodoListPage from './pages/TodoListPage';
 
+
 const App: React.FC = () => {
   return (
     <BrowserRouter>
@@ -28,7 +29,6 @@ const App: React.FC = () => {
       <Route path="/reset-password" element={<ResetPassPage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/todo-list" element={<TodoListPage />} />
-        
       </Routes>
     </BrowserRouter>
   );

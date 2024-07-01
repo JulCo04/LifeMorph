@@ -4,6 +4,8 @@ import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/react";
 import GoalBox, { Goal } from "../components/GoalBox";
 import GoalColumnTitle from "../components/GoalColumnTitle";
 import AddGoalButton from "../components/AddGoalButton";
+import Sidebar from "../components/Sidebar";
+import APTitleBar from "../components/APTitleBar";
 import { clsx } from "clsx";
 
 const GoalTrackingPage: React.FC = () => {
@@ -106,83 +108,82 @@ const GoalTrackingPage: React.FC = () => {
   let goalTabs: Goal[][] = [notStarted, inProgress, completed];
 
   return (
-    <div>
-      <h1 className="text-neutral-500 font-medium ml-5 text-3xl">
-        Goal Tracker
-      </h1>
-      <div className="border-2 mx-5 my-2 border-neutral-400" />
-
-      <div className="w-full mx-5 p-2 mt-8 sm:px-0">
-        <TabGroup>
-          <TabList className="flex rounded-xl bg-white p-1">
-            <Tab
-              key="All"
-              className={({ selected }) =>
-                clsx(
-                  "px-5 py-2.5 text-md font-medium leading-5 focus:outline-none border-b-2",
-                  selected
-                    ? "bg-white text-black border-black border-b-4"
-                    : "text-neutral-400 border-neutral-400 hover:text-neutral-500 hover:border-neutral-500"
-                )
-              }
-            >
-              All
-            </Tab>
-            {columnTitleNames.map((title) => (
+    <div className="flex">
+      <Sidebar />
+      <div className="w-full">
+        <APTitleBar title="Goal Tracker" />
+        <div className="mx-5 p-2 sm:px-0">
+          <TabGroup>
+            <TabList className="flex rounded-xl bg-white p-1">
               <Tab
-                key={title}
+                key="All"
                 className={({ selected }) =>
                   clsx(
-                    "px-5 py-2.5 text-md text-nowrap font-medium leading-5 focus:outline-none border-b-2",
+                    "px-5 py-2.5 text-md font-medium leading-5 focus:outline-none border-b-2",
                     selected
                       ? "bg-white text-black border-black border-b-4"
                       : "text-neutral-400 border-neutral-400 hover:text-neutral-500 hover:border-neutral-500"
                   )
                 }
               >
-                {title}
+                All
               </Tab>
-            ))}
-            <Tab
-              disabled
-              className="w-full focus:outline-none border-b-2 border-neutral-400"
-            />
-            <AddGoalButton handleAddGoal={handleAddGoal} />
-          </TabList>
-          <TabPanels className="mt-2">
-            <TabPanel>
-              <div className="w-2/3 flex">
-                {goalTabs.map((goalType, index) => (
-                  <div className="w-1/3 mx-2">
-                    {goalColumn(goalType, index)}
-                  </div>
-                ))}
-              </div>
-            </TabPanel>
-            {goalTabs.map((type, index) => (
-              <TabPanel key={index}>
-                <div className="ml-2 w-[30rem]">
-                  {type.map((goal) => (
-                    <GoalBox
-                      key={goal.id}
-                      id={goal.id}
-                      goalName={goal.goalName}
-                      category={goal.category}
-                      description={goal.description}
-                      endDate={dateFormatter.format(new Date(goal.endDate))}
-                      repetition={goal.repetition}
-                      dateOfRepetition=""
-                      goalType={goal.goalType}
-                      steps=""
-                      completed={goal.completed}
-                      handleDeleteGoal={handleDeleteGoal}
-                    />
+              {columnTitleNames.map((title) => (
+                <Tab
+                  key={title}
+                  className={({ selected }) =>
+                    clsx(
+                      "px-5 py-2.5 text-md text-nowrap font-medium leading-5 focus:outline-none border-b-2",
+                      selected
+                        ? "bg-white text-black border-black border-b-4"
+                        : "text-neutral-400 border-neutral-400 hover:text-neutral-500 hover:border-neutral-500"
+                    )
+                  }
+                >
+                  {title}
+                </Tab>
+              ))}
+              <Tab
+                disabled
+                className="w-full focus:outline-none border-b-2 border-neutral-400"
+              />
+              <AddGoalButton handleAddGoal={handleAddGoal} />
+            </TabList>
+            <TabPanels className="mt-2">
+              <TabPanel>
+                <div className="flex">
+                  {goalTabs.map((goalType, index) => (
+                    <div className="w-1/3 mx-2">
+                      {goalColumn(goalType, index)}
+                    </div>
                   ))}
                 </div>
               </TabPanel>
-            ))}
-          </TabPanels>
-        </TabGroup>
+              {goalTabs.map((type, index) => (
+                <TabPanel key={index}>
+                  <div className="ml-2 w-[30rem]">
+                    {type.map((goal) => (
+                      <GoalBox
+                        key={goal.id}
+                        id={goal.id}
+                        goalName={goal.goalName}
+                        category={goal.category}
+                        description={goal.description}
+                        endDate={dateFormatter.format(new Date(goal.endDate))}
+                        repetition={goal.repetition}
+                        dateOfRepetition=""
+                        goalType={goal.goalType}
+                        steps=""
+                        completed={goal.completed}
+                        handleDeleteGoal={handleDeleteGoal}
+                      />
+                    ))}
+                  </div>
+                </TabPanel>
+              ))}
+            </TabPanels>
+          </TabGroup>
+        </div>
       </div>
     </div>
   );

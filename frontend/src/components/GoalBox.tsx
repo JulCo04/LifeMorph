@@ -22,7 +22,7 @@ export interface Goal {
   category: string;
   description: string;
   endDate: string;
-  repetition: string;
+  repetition: number;
   dateOfRepetition: string;
   goalType: number;
   steps: Step[] | Ratio | string;

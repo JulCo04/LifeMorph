@@ -5,6 +5,7 @@ import {
   DialogBackdrop,
   DialogPanel,
   DialogTitle,
+  Checkbox,
 } from "@headlessui/react";
 
 interface Props {
@@ -13,13 +14,14 @@ interface Props {
 
 function AddGoalButton({ handleAddGoal }: Props) {
   const [open, setOpen] = useState(false);
+  const [checkBox, setCheckBox] = useState(false);
   const initialState = {
     id: -1,
     goalName: "",
     category: "",
     description: "",
     endDate: new Date().toISOString().slice(0, 10),
-    repetition: "",
+    repetition: 0,
     dateOfRepetition: "",
     goalType: 0,
     steps: "",
@@ -154,6 +156,47 @@ function AddGoalButton({ handleAddGoal }: Props) {
                                   name="endDate"
                                   id="endDate"
                                   value={newGoal.endDate}
+                                  onChange={handleChange}
+                                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <Checkbox
+                                checked={checkBox}
+                                onChange={setCheckBox}
+                                className="group block size-4 rounded border bg-white data-[checked]:bg-blue-500"
+                              >
+                                {/* Checkmark icon */}
+                                <svg
+                                  className="stroke-white opacity-0 group-data-[checked]:opacity-100"
+                                  viewBox="0 0 14 14"
+                                  fill="none"
+                                >
+                                  <path
+                                    d="M3 8L6 11L11 3.5"
+                                    strokeWidth={2}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </Checkbox>
+                              <label className="block text-sm font-medium leading-6 text-gray-900">
+                                Repetition?
+                              </label>
+                            </div>
+
+                            <div className="col-span-3">
+                              <label className="block text-sm font-medium leading-6 text-gray-900">
+                                Repeat every ___ days
+                              </label>
+                              <div className="mt-2">
+                                <input
+                                  type="text"
+                                  name="repetition"
+                                  id="repetition"
+                                  value={newGoal.repetition}
                                   onChange={handleChange}
                                   className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                 />

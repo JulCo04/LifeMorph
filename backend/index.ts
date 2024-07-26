@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import express, { Request, Response, NextFunction } from 'express';
-import mysql, { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise';
+import mysql, { FieldPacket, Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import cors from 'cors';
 
 dotenv.config();
@@ -55,8 +55,8 @@ app.get('/api/users', async (req: Request, res: Response) => {
 
 app.post('/api/goals', async (req, res) => {
   try {
-      const { goalName, category, endDate } = req.body;
-      const [result] = await pool.query('INSERT INTO goals (goalName, category, endDate, repetition, goalType, completed) VALUES (?, ?, ?, ?, ?, ?)', [goalName, category, endDate, 0, 0, 0]);
+      const { goalName, category, description, endDate, repetition, dateOfRepetition, goalType, steps } = req.body;
+      const [result] = await pool.query('INSERT INTO goals (goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [goalName, category, description, endDate, repetition, dateOfRepetition, goalType, 0, steps]);
       if (result && 'insertId' in result) {
           const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM goals WHERE id = ?', [result.insertId]);
           if (rows.length > 0) {
@@ -72,6 +72,29 @@ app.post('/api/goals', async (req, res) => {
   catch (error) {
       console.error('Error adding user to the database:', error);
       res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/goals', async (req, res) => {
+  try {
+    const { id, goalName, category, description, endDate, repetition, dateOfRepetition, goalType, steps, completed } = req.body;
+
+    // Update the goal in the database
+    const [result] : [ResultSetHeader, FieldPacket[]] = await pool.query(
+      'UPDATE goals SET goalName = ?, category = ?, description = ?, endDate = ?, repetition = ?, dateOfRepetition = ?, goalType = ?, steps = ?, completed = ? WHERE id = ?',
+      [goalName, category, description, endDate, repetition, dateOfRepetition, goalType, steps, completed, id]
+    );
+
+    if (result.affectedRows > 0) {
+
+        res.status(200).json({ message: 'Goal updated successfully'});
+
+    } else {
+      res.status(500).json({ error: 'Failed to update goal' });
+    }
+  } catch (error) {
+    console.error('Error updating the goal in the database:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

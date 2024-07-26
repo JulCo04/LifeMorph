@@ -13,6 +13,7 @@ import GoalTrackingPage from './pages/GoalTrackingPage';
 import ResetPassPage from './pages/ResetPassPage';
 import SettingsPage from './pages/SettingsPage';
 import TodoListPage from './pages/TodoListPage';
+import RegisterPage from './pages/RegisterPage';
 
 
 const App: React.FC = () => {
@@ -29,6 +30,7 @@ const App: React.FC = () => {
       <Route path="/reset-password" element={<ResetPassPage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/todo-list" element={<TodoListPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       </Routes>
     </BrowserRouter>
   );

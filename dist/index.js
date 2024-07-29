@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import express from 'express';
 import mysql from 'mysql2/promise';
 import cors from 'cors';
+import fileUpload from 'express-fileupload';
+import path from 'path';
 dotenv.config();
 const app = express();
 const port = 3001;
@@ -21,7 +23,8 @@ pool.getConnection()
     process.exit(1);
 });
 app.use(express.json());
-app.use(cors()); // Enable CORS for all routes
+app.use(cors());
+app.use(fileUpload());
 // Display all Goals
 app.get('/api/goals', async (req, res) => {
     try {
@@ -34,11 +37,12 @@ app.get('/api/goals', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+// Serve static files for uploaded photos
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Display all Users
 app.get('/api/users', async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM users');
-        console.log(rows);
         res.json(rows);
     }
     catch (error) {
@@ -102,7 +106,7 @@ app.delete('/api/goals/:goalId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-// Register user
+// Add new user
 app.post('/api/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -198,6 +202,114 @@ app.delete('/api/users/:userId', async (req, res) => {
     }
     catch (error) {
         console.error('Error removing user from the database:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Endpoint to add a new contact
+app.post('/api/contacts', async (req, res) => {
+    try {
+        const { firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links } = req.body;
+        let photoPath = null;
+        if (req.files && req.files.photo) {
+            const photo = req.files.photo;
+            const uploadPath = path.join(__dirname, 'uploads', photo.name);
+            await photo.mv(uploadPath);
+            photoPath = `/uploads/${photo.name}`;
+        }
+        const [result] = await pool.query('INSERT INTO contacts (firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links, photoPath]);
+        if (result && 'insertId' in result) {
+            res.status(201).json({ message: 'Contact added successfully', contactId: result.insertId });
+        }
+        else {
+            res.status(500).json({ error: 'Failed to add contact' });
+        }
+    }
+    catch (error) {
+        console.error('Error adding contact to the database:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Endpoint to get all contacts
+app.get('/api/contacts', async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT * FROM contacts');
+        res.json(rows);
+    }
+    catch (error) {
+        console.error('Error querying the database:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Endpoint to get upcoming birthdays
+app.get('/api/contacts/upcoming-birthdays', async (req, res) => {
+    try {
+        const [rows] = await pool.query(`
+      SELECT * FROM contacts 
+      WHERE MONTH(birthday) = MONTH(CURDATE()) 
+      AND DAY(birthday) >= DAY(CURDATE())
+      ORDER BY DAY(birthday) ASC
+    `);
+        res.json(rows);
+    }
+    catch (error) {
+        console.error('Error querying the database:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Update a contact
+app.put('/api/contacts/:contactId', async (req, res) => {
+    const contactId = req.params.contactId;
+    const { firstName, lastName, relationship, birthday, email, phoneNumber, notes, links } = req.body;
+    let photoPath = null;
+    try {
+        if (req.files && req.files.photo) {
+            const photo = req.files.photo;
+            const uploadPath = path.join(__dirname, 'uploads', photo.name);
+            await photo.mv(uploadPath);
+            photoPath = `/uploads/${photo.name}`;
+        }
+        const [result] = await pool.query('UPDATE contacts SET firstName = ?, lastName = ?, relationship = ?, birthday = ?, email = ?, phoneNumber = ?, notes = ?, links = ?, photo = COALESCE(?, photo) WHERE id = ?', [firstName, lastName, relationship, birthday, email, phoneNumber, notes, links, photoPath, contactId]);
+        if (result && 'affectedRows' in result && result.affectedRows === 1) {
+            res.json({ message: 'Contact updated successfully' });
+        }
+        else {
+            res.status(404).json({ error: 'Contact not found' });
+        }
+    }
+    catch (error) {
+        console.error('Error updating contact in the database:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Delete a contact
+app.delete('/api/contacts/:contactId', async (req, res) => {
+    const contactId = req.params.contactId;
+    try {
+        const [result] = await pool.query('DELETE FROM contacts WHERE id = ?', [contactId]);
+        if (result && 'affectedRows' in result && result.affectedRows === 1) {
+            res.json({ message: 'Contact deleted successfully' });
+        }
+        else {
+            res.status(404).json({ error: 'Contact not found' });
+        }
+    }
+    catch (error) {
+        console.error('Error removing contact from the database:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Search contacts by firstName, lastName, or email
+app.get('/api/contacts/search', async (req, res) => {
+    const searchQuery = req.query.q;
+    if (!searchQuery) {
+        return res.status(400).json({ error: 'Search query is required' });
+    }
+    try {
+        const [rows] = await pool.query('SELECT * FROM contacts WHERE firstName LIKE ? OR lastName LIKE ? OR email LIKE ?', [`%${searchQuery}%`, `%${searchQuery}%`, `%${searchQuery}%`]);
+        res.json(rows);
+    }
+    catch (error) {
+        console.error('Error querying the database:', error.message);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

@@ -2,6 +2,9 @@ import dotenv from 'dotenv';
 import express, { Request, Response, NextFunction } from 'express';
 import mysql, { FieldPacket, Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import cors from 'cors';
+import fileUpload, { UploadedFile } from 'express-fileupload';
+import path from 'path';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -26,7 +29,8 @@ pool.getConnection()
   });
 
 app.use(express.json());
-app.use(cors()); // Enable CORS for all routes
+app.use(cors());
+app.use(fileUpload());
 
 // Display all Goals
 app.get('/api/goals', async (req, res) => {
@@ -40,12 +44,13 @@ app.get('/api/goals', async (req, res) => {
       res.status(500).json({ error: 'Internal server error' });
   }
 });
+// Serve static files for uploaded photos
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Display all Users
 app.get('/api/users', async (req: Request, res: Response) => {
   try {
     const [rows] = await pool.query('SELECT * FROM users');
-    console.log(rows);
     res.json(rows);
   } catch (error: any) {
     console.error('Error querying the database:', error.message);
@@ -116,7 +121,8 @@ app.delete('/api/goals/:goalId', async (req, res) => {
   }
 });
 
-// Register user
+
+// Add new user
 app.post('/api/register', async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body;
@@ -165,7 +171,7 @@ app.post('/api/register', async (req: Request, res: Response) => {
 
     const [result] = await pool.query('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, password]);
     if (result && 'insertId' in result) {
-      res.status(201).json({ message: 'User added successfully', userId: result.insertId });
+      res.status(201).json({ message: 'User added successfully', userId: (result as any).insertId });
     } else {
       res.status(500).json({ error: 'Failed to add user' });
     }
@@ -211,7 +217,7 @@ app.delete('/api/users/:userId', async (req: Request, res: Response) => {
   const userId = req.params.userId;
   try {
     const [result] = await pool.query('DELETE FROM users WHERE id = ?', [userId]);
-    if (result && 'affectedRows' in result && result.affectedRows === 1) {
+    if (result && 'affectedRows' in result && (result as any).affectedRows === 1) {
       res.json({ message: 'User deleted successfully' });
     } else {
       res.status(404).json({ error: 'User not found' });
@@ -222,6 +228,126 @@ app.delete('/api/users/:userId', async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to add a new contact
+app.post('/api/contacts', async (req: Request, res: Response) => {
+  try {
+    const { firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links } = req.body;
+    let photoPath = null;
+
+    if (req.files && req.files.photo) {
+      const photo = req.files.photo as UploadedFile;
+      const uploadPath = path.join(__dirname, 'uploads', photo.name);
+      await photo.mv(uploadPath);
+      photoPath = `/uploads/${photo.name}`;
+    }
+
+    const [result] = await pool.query(
+      'INSERT INTO contacts (firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links, photoPath]
+    );
+
+    if (result && 'insertId' in result) {
+      res.status(201).json({ message: 'Contact added successfully', contactId: (result as any).insertId });
+    } else {
+      res.status(500).json({ error: 'Failed to add contact' });
+    }
+  } catch (error: any) {
+    console.error('Error adding contact to the database:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Endpoint to get all contacts
+app.get('/api/contacts', async (req: Request, res: Response) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM contacts');
+    res.json(rows);
+  } catch (error: any) {
+    console.error('Error querying the database:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Endpoint to get upcoming birthdays
+app.get('/api/contacts/upcoming-birthdays', async (req: Request, res: Response) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT * FROM contacts 
+      WHERE MONTH(birthday) = MONTH(CURDATE()) 
+      AND DAY(birthday) >= DAY(CURDATE())
+      ORDER BY DAY(birthday) ASC
+    `);
+    res.json(rows);
+  } catch (error: any) {
+    console.error('Error querying the database:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update a contact
+app.put('/api/contacts/:contactId', async (req: Request, res: Response) => {
+  const contactId = req.params.contactId;
+  const { firstName, lastName, relationship, birthday, email, phoneNumber, notes, links } = req.body;
+  let photoPath = null;
+
+  try {
+    if (req.files && req.files.photo) {
+      const photo = req.files.photo as UploadedFile;
+      const uploadPath = path.join(__dirname, 'uploads', photo.name);
+      await photo.mv(uploadPath);
+      photoPath = `/uploads/${photo.name}`;
+    }
+
+    const [result] = await pool.query(
+      'UPDATE contacts SET firstName = ?, lastName = ?, relationship = ?, birthday = ?, email = ?, phoneNumber = ?, notes = ?, links = ?, photo = COALESCE(?, photo) WHERE id = ?',
+      [firstName, lastName, relationship, birthday, email, phoneNumber, notes, links, photoPath, contactId]
+    );
+
+    if (result && 'affectedRows' in result && result.affectedRows === 1) {
+      res.json({ message: 'Contact updated successfully' });
+    } else {
+      res.status(404).json({ error: 'Contact not found' });
+    }
+  } catch (error: any) {
+    console.error('Error updating contact in the database:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete a contact
+app.delete('/api/contacts/:contactId', async (req: Request, res: Response) => {
+  const contactId = req.params.contactId;
+  try {
+    const [result] = await pool.query('DELETE FROM contacts WHERE id = ?', [contactId]);
+    if (result && 'affectedRows' in result && result.affectedRows === 1) {
+      res.json({ message: 'Contact deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Contact not found' });
+    }
+  } catch (error: any) {
+    console.error('Error removing contact from the database:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Search contacts by firstName, lastName, or email
+app.get('/api/contacts/search', async (req: Request, res: Response) => {
+  const searchQuery = req.query.q as string;
+  if (!searchQuery) {
+    return res.status(400).json({ error: 'Search query is required' });
+  }
+
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM contacts WHERE firstName LIKE ? OR lastName LIKE ? OR email LIKE ?',
+      [`%${searchQuery}%`, `%${searchQuery}%`, `%${searchQuery}%`]
+    );
+    res.json(rows);
+  } catch (error: any) {
+    console.error('Error querying the database:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
@@ -231,6 +357,5 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
-
 
 

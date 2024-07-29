@@ -16,7 +16,7 @@ import { clsx } from "clsx";
 import { GoGoal } from "react-icons/go";
 import { MdClose, MdDelete, MdOutlineDateRange } from "react-icons/md";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { FaCheck, FaMinus, FaPencil, FaPlus, FaTrash } from "react-icons/fa6";
+import { FaCheck, FaPencil, FaPlus, FaTrash } from "react-icons/fa6";
 
 export interface Step {
   name: string;
@@ -48,8 +48,11 @@ interface Props {
 }
 
 function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
-  const [open, setOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [open, setOpen] = useState({
+    menuModal: false,
+    logModal: false,
+  });
+  const [isEdited, setIsEdited] = useState(false);
 
   const initialGoalState = {
     goalName: goal.goalName,
@@ -94,6 +97,21 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
     "Dec",
   ];
 
+  const editItems = open.logModal
+    ? ["Progress"]
+    : [
+        "Goal",
+        "Category",
+        "Deadline",
+        "Goal Type",
+        "Progress",
+        "Description",
+        "Repetition",
+      ];
+
+  const inputFieldClass =
+    "rounded-md border-0 py-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:leading-6";
+
   const currentDate = new Date();
   const deadline = new Date(
     goalStates.displayedGoal.endDate.replace(/-/g, "/")
@@ -113,52 +131,7 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
 
   const blankStep: Step = { name: "", done: false };
 
-  const [editSubgoals, setEditSubgoals] = useState<Step[]>([blankStep]);
-  const [editRatio, setEditRatio] = useState({ done: 0, target: 0 });
-
-  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-  const [repetitionExpanded, setRepetitionExpanded] = useState(false);
-
-  const handleSwapEditMode = () => {
-    setEditMode(!editMode);
-
-    if (editMode) {
-      if (goalStates.displayedGoal.goalType === 1)
-        setEditSubgoals(goalStates.displayedGoal.steps as Step[]);
-      if (goalStates.displayedGoal.goalType === 2)
-        setEditRatio(goalStates.displayedGoal.steps as Ratio);
-    }
-
-    if (descriptionExpanded || repetitionExpanded)
-      setGoalStates((prevState) => {
-        const newDescription = descriptionExpanded
-          ? prevState.editedGoal.description
-          : "";
-        const newRepetition = repetitionExpanded
-          ? prevState.editedGoal.repetition
-          : 0;
-        let newDateOfRep = null;
-
-        if (newRepetition > 0) {
-          const currDate = new Date();
-          currDate.setDate(
-            currDate.getDate() + goalStates.editedGoal.repetition
-          );
-          newDateOfRep = currDate.toISOString().slice(0, 10);
-        }
-
-        return {
-          ...prevState,
-          editedGoal: {
-            ...prevState.editedGoal,
-            description: newDescription,
-            repetition: newRepetition,
-            dateOfRepetition: newDateOfRep,
-          },
-        };
-      });
-  };
-
+  // (Executed at initialization) For repeating goals, reset progress if goal is due for repetition
   const handleRepetition = () => {
     if (
       daysLeft > 0 &&
@@ -168,88 +141,153 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
       // Reset repeat date
       const currDate = new Date();
       currDate.setDate(currDate.getDate() + goalStates.editedGoal.repetition);
-      setGoalStates((prevState) => ({
-        ...prevState,
-        editedGoal: {
-          ...prevState.editedGoal,
-          dateOfRepetition: currDate.toISOString().slice(0, 10),
-          completed: 0,
-        },
-      }));
+      setGoalStates((prevState) => {
+        let updatedSteps = prevState.editedGoal.steps;
 
-      // Reset steps
-      // Subgoals
-      if (goalStates.editedGoal.goalType === 1) {
-        setGoalStates((prevState) => {
-          const updatedSteps = [...(prevState.editedGoal.steps as Step[])];
+        // Reset subgoals
+        if (goalStates.editedGoal.goalType === 1) {
+          updatedSteps = [...(prevState.editedGoal.steps as Step[])];
           for (let i = 0; i < updatedSteps.length; i++) {
             updatedSteps[i] = {
               ...updatedSteps[i],
               done: false,
             };
           }
-          return {
-            ...prevState,
-            editedGoal: { ...prevState.editedGoal, steps: updatedSteps },
-          };
-        });
-      }
-      // Ratio
-      else if (goalStates.editedGoal.goalType === 2) {
-        setGoalStates((prevState) => {
-          let updatedSteps = prevState.editedGoal.steps as Ratio;
+        }
+
+        // Reset ratio
+        else if (goalStates.editedGoal.goalType === 2) {
+          updatedSteps = prevState.editedGoal.steps as Ratio;
           updatedSteps = {
             ...updatedSteps,
             done: 0,
           };
-          return {
-            ...prevState,
-            editedGoal: { ...prevState.editedGoal, steps: updatedSteps },
-          };
-        });
-      }
+        }
 
-      handleUpdateGoal();
+        const updatedGoal = {
+          ...prevState.editedGoal,
+          dateOfRepetition: currDate.toISOString().slice(0, 10),
+          steps: updatedSteps,
+          completed: 0,
+        };
+
+        handleEditGoal({
+          ...updatedGoal,
+          id: goal.id,
+          steps: JSON.stringify(updatedGoal.steps),
+        });
+
+        return {
+          displayedGoal: updatedGoal,
+          editedGoal: updatedGoal,
+        };
+      });
     }
   };
   handleRepetition();
+
+  const handleUpdateGoal = () => {
+    setGoalStates((prevState) => {
+      // Update completion status
+      let updatedCompletion = prevState.editedGoal.completed;
+
+      if (prevState.editedGoal.goalType === 1) {
+        const subgoals = [...(prevState.editedGoal.steps as Step[])];
+
+        let numOfDone = 0;
+        for (let i = 0; i < subgoals.length; i++)
+          if (subgoals[i].done) numOfDone++;
+
+        updatedCompletion = Math.round((numOfDone * 100) / subgoals.length);
+      } else if (prevState.editedGoal.goalType === 2) {
+        const ratio = prevState.editedGoal.steps as Ratio;
+        updatedCompletion =
+          ratio.done > ratio.target
+            ? 100
+            : ratio.target === 0
+            ? 0
+            : Math.round((ratio.done * 100) / ratio.target);
+      }
+
+      // Adjust dateOfRepetition if repetition is changed
+      let newDateOfRep = prevState.editedGoal.dateOfRepetition;
+
+      if (
+        goalStates.editedGoal.repetition !==
+          goalStates.displayedGoal.repetition &&
+        goalStates.editedGoal.repetition !== 0
+      ) {
+        const currDate = new Date();
+        currDate.setDate(currDate.getDate() + goalStates.editedGoal.repetition);
+        newDateOfRep = currDate.toISOString().slice(0, 10);
+      }
+
+      // constructed goal for API call
+      const updatedGoal: Goal = {
+        ...prevState.editedGoal,
+        id: goal.id,
+        dateOfRepetition: newDateOfRep,
+        completed: updatedCompletion,
+      };
+
+      // new goalStates (displayedGoal = editedGoal)
+      const updatedGoalState = {
+        ...prevState,
+        displayedGoal: updatedGoal,
+      };
+
+      // API call
+      handleEditGoal({
+        ...updatedGoal,
+        steps: JSON.stringify(updatedGoal.steps),
+      });
+
+      return updatedGoalState;
+    });
+  };
 
   const handleEdit = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) => {
+    if (!isEdited) setIsEdited(true);
+
     const { name, value } = e.target;
 
-    if (name === "goalType" || name === "repetition")
-      setGoalStates((prevState) => ({
-        ...prevState,
-        editedGoal: { ...prevState.editedGoal, [name]: Number(value) },
-      }));
-    else
-      setGoalStates((prevState) => ({
+    setGoalStates((prevState) => {
+      if (name === "goalType" || name === "repetition")
+        return {
+          ...prevState,
+          editedGoal: { ...prevState.editedGoal, [name]: Number(value) },
+        };
+
+      return {
         ...prevState,
         editedGoal: { ...prevState.editedGoal, [name]: value },
-      }));
-  };
-
-  const handleUpdateGoal = () => {
-    setGoalStates((prevState) => {
-      const updatedGoalState = {
-        ...prevState,
-        displayedGoal: prevState.editedGoal,
       };
-
-      const updatedGoal: Goal = {
-        ...updatedGoalState.editedGoal,
-        id: goal.id,
-        steps: JSON.stringify(updatedGoalState.editedGoal.steps),
-      };
-
-      handleEditGoal(updatedGoal);
-
-      return updatedGoalState;
     });
+
+    if (name === "goalType") {
+      setGoalStates((prevState) => {
+        const goalType = Number(value);
+        let newSteps = prevState.editedGoal.steps;
+
+        if (goalType === 1) newSteps = [blankStep];
+        else if (goalType === 2) newSteps = { done: 0, target: 0 };
+        else {
+          return {
+            ...prevState,
+            editedGoal: { ...prevState.editedGoal, steps: "{}", completed: 0 },
+          };
+        }
+
+        return {
+          ...prevState,
+          editedGoal: { ...prevState.editedGoal, steps: newSteps },
+        };
+      });
+    }
   };
 
   const handleClickDots = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -257,9 +295,7 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
   };
 
   const handleClickEdit = () => {
-    setEditMode(false);
-    handleSwapEditMode();
-    setOpen(true);
+    setOpen((prevState) => ({ ...prevState, menuModal: true }));
   };
 
   const handleClickComplete = () => {
@@ -268,30 +304,26 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
       editedGoal: { ...prevState.editedGoal, completed: 100 },
     }));
 
-    // Subgoals
-    if (goalStates.editedGoal.goalType === 1) {
+    if (goalStates.editedGoal.goalType > 0) {
       setGoalStates((prevState) => {
-        const updatedSteps = [...(prevState.editedGoal.steps as Step[])];
-        for (let i = 0; i < updatedSteps.length; i++) {
-          updatedSteps[i] = {
-            ...updatedSteps[i],
-            done: true,
+        let updatedSteps = prevState.editedGoal.steps;
+
+        if (goalStates.editedGoal.goalType === 1) {
+          updatedSteps = [...(prevState.editedGoal.steps as Step[])];
+          for (let i = 0; i < updatedSteps.length; i++) {
+            updatedSteps[i] = {
+              ...updatedSteps[i],
+              done: true,
+            };
+          }
+        } else if (goalStates.editedGoal.goalType === 2) {
+          updatedSteps = prevState.editedGoal.steps as Ratio;
+          updatedSteps = {
+            ...updatedSteps,
+            done: updatedSteps.target,
           };
         }
-        return {
-          ...prevState,
-          editedGoal: { ...prevState.editedGoal, steps: updatedSteps },
-        };
-      });
-    }
-    // Ratio
-    else if (goalStates.editedGoal.goalType === 2) {
-      setGoalStates((prevState) => {
-        let updatedSteps = prevState.editedGoal.steps as Ratio;
-        updatedSteps = {
-          ...updatedSteps,
-          done: updatedSteps.target,
-        };
+
         return {
           ...prevState,
           editedGoal: { ...prevState.editedGoal, steps: updatedSteps },
@@ -301,339 +333,338 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
   };
 
   const handleClickDelete = () => {
-    setOpen(false);
+    setOpen((prevState) => ({ ...prevState, menuModal: false }));
     handleDeleteGoal(goal.id);
   };
 
   const handleSubgoalUpdate = (index: number) => {
+    if (!isEdited) setIsEdited(true);
     setGoalStates((prevState) => {
       const updatedSteps = [...(prevState.editedGoal.steps as Step[])];
       const bool = !updatedSteps[index].done;
-      const percent = bool
-        ? Math.round(100 / updatedSteps.length)
-        : -Math.round(100 / updatedSteps.length);
+
       updatedSteps[index] = {
         ...updatedSteps[index],
         done: bool,
       };
 
-      let numOfDone = 0;
-      for (let i = 0; i < updatedSteps.length; i++)
-        if (updatedSteps[i].done) numOfDone++;
-
-      const updatedCompletion =
-        numOfDone === updatedSteps.length
-          ? 100
-          : numOfDone === 0
-          ? 0
-          : prevState.editedGoal.completed + percent;
-
       return {
         ...prevState,
         editedGoal: {
           ...prevState.editedGoal,
           steps: updatedSteps,
-          completed: updatedCompletion,
         },
       };
     });
-
-    handleUpdateGoal();
   };
 
-  const handleRatioUpdate = (done: number) => {
+  const handleRatioDoneUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isEdited) setIsEdited(true);
     setGoalStates((prevState) => {
-      let updatedSteps = prevState.editedGoal.steps as Ratio;
-      updatedSteps = {
-        ...updatedSteps,
-        done: done,
+      let updatedSteps = {
+        target: (prevState.editedGoal.steps as Ratio).target,
+        done: Number(e.target.value),
       };
-
-      const updatedCompletion =
-        done > updatedSteps.target
-          ? 100
-          : Math.round((done * 100) / updatedSteps.target);
 
       return {
         ...prevState,
         editedGoal: {
           ...prevState.editedGoal,
           steps: updatedSteps,
-          completed: updatedCompletion,
         },
       };
     });
+  };
 
-    handleUpdateGoal();
+  const handleRatioTargetUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isEdited) setIsEdited(true);
+    setGoalStates((prevState) => {
+      let updatedSteps = {
+        done: (prevState.editedGoal.steps as Ratio).done,
+        target: Number(e.target.value),
+      };
+
+      return {
+        ...prevState,
+        editedGoal: {
+          ...prevState.editedGoal,
+          steps: updatedSteps,
+        },
+      };
+    });
   };
 
   const handleClickSave = () => {
-    const newGoalType = goalStates.editedGoal.goalType;
-
-    if (newGoalType === 0) {
-      setGoalStates((prevState) => ({
-        ...prevState,
-        editedGoal: { ...prevState.editedGoal, steps: "{}", completed: 0 },
-      }));
-    } else if (newGoalType === 1) {
-      setGoalStates((prevState) => ({
-        ...prevState,
-        editedGoal: {
-          ...prevState.editedGoal,
-          steps: editSubgoals,
-          completed: 0,
-        },
-      }));
-    } else if (newGoalType === 2) {
-      setGoalStates((prevState) => ({
-        ...prevState,
-        editedGoal: {
-          ...prevState.editedGoal,
-          steps: { done: 0, target: editRatio.target },
-          completed: 0,
-        },
-      }));
+    if (isEdited) {
+      setIsEdited(false);
+      handleUpdateGoal();
     }
-
-    handleUpdateGoal();
-    setEditMode(false);
   };
 
   const handleStepChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     index: number
   ) => {
+    if (!isEdited) setIsEdited(true);
     const { value } = e.target;
-    setEditSubgoals((prevState) => {
-      const newEditSubgoals = [...prevState];
-      newEditSubgoals[index] = {
-        name: value,
-        done: false,
+    setGoalStates((prevState) => {
+      const newSteps = [...(prevState.editedGoal.steps as Step[])];
+      newSteps[index] = { name: value, done: false };
+
+      return {
+        ...prevState,
+        editedGoal: { ...prevState.editedGoal, steps: newSteps },
       };
-      return newEditSubgoals;
     });
   };
 
-  const handleRemoveStep = (index: number) => {
-    setEditSubgoals(editSubgoals.filter((_, idx) => idx !== index));
+  const handleNewStep = () => {
+    if (!isEdited) setIsEdited(true);
+    const subgoals = goalStates.editedGoal.steps as Step[];
+    if (subgoals[subgoals.length - 1].name !== "") {
+      subgoals.push(blankStep);
+      setGoalStates((prevState) => ({
+        ...prevState,
+        editedGoal: { ...prevState.editedGoal, steps: subgoals },
+      }));
+    }
   };
 
-  const handleNewStep = () => {
-    if (editSubgoals[editSubgoals.length - 1].name !== "") {
-      setEditSubgoals((prevState) => [...prevState, blankStep]);
-    }
+  const handleStepDelete = (index: number) => {
+    if (!isEdited) setIsEdited(true);
+    setGoalStates((prevState) => ({
+      ...prevState,
+      editedGoal: {
+        ...prevState.editedGoal,
+        steps: (prevState.editedGoal.steps as Step[]).filter(
+          (_, idx) => idx !== index
+        ),
+      },
+    }));
   };
 
   const editModePanel = () => {
     return (
       <>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center text-2xl">
-            <span className="mr-3">
-              <GoGoal />
-            </span>
-            <div className="mt-2 w-4/5">
-              <input
-                type="text"
-                name="goalName"
-                id="goalName"
-                value={goalStates.editedGoal.goalName}
-                onChange={handleEdit}
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-2 w-[200px]">
-          <select
-            id="category"
-            name="category"
-            value={goalStates.editedGoal.category}
-            onChange={handleEdit}
-            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-          >
-            <option value="N/A">--Select a category--</option>
-            {categories.map((category, index) => (
-              <option value={category}>{category}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-sm font-medium leading-6 text-gray-900">
-            Deadline
-          </label>
-          <div className="mt-2 w-[200px]">
-            <input
-              type="date"
-              name="endDate"
-              id="endDate"
-              value={goalStates.editedGoal.endDate}
-              onChange={handleEdit}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-sm font-medium leading-6 text-gray-900">
-            Goal Type
-          </label>
-          <div className="mt-2">
-            <select
-              id="goalType"
-              name="goalType"
-              value={goalStates.editedGoal.goalType}
-              onChange={handleEdit}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-            >
-              {goalTypes.map((type, index) => (
-                <option value={index}>{type}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div
-          className={`overflow-hidden ${
-            goalStates.editedGoal.goalType === 2 ? "mb-6 max-h-32" : "max-h-0"
-          }`}
-        >
-          <label className="block text-sm font-medium leading-6 text-gray-900">
-            Target Value
-          </label>
-          <div className="mt-2">
-            <input
-              type="number"
-              min="0"
-              name="steps"
-              id="stepsRatio"
-              value={editRatio.target}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setEditRatio((prevState) => ({
-                  ...prevState,
-                  target: Number(e.target.value),
-                }))
-              }
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-
-        <div
-          className={`overflow-hidden ${
-            goalStates.editedGoal.goalType === 1
-              ? "mb-6 max-h-screen"
-              : "max-h-0"
-          }`}
-        >
-          {editSubgoals.map((subgoal, index) => (
-            <>
-              <div>
-                <label className="block text-xs font-medium leading-6 text-gray-900">
-                  Step {index + 1}: {subgoal.name}
-                </label>
+        <div className="grid grid-rows-[auto_auto_auto_auto_auto_auto_auto_auto]">
+          <div className="col-span-full flex flex-col justify-center py-8 px-12 border-gray-200 border-b">
+            <div className="flex justify-between">
+              <div className="font-semibold">Goal Information</div>
+              <div
+                onClick={() =>
+                  setOpen((prevState) => ({
+                    ...prevState,
+                    menuModal: false,
+                  }))
+                }
+                className="text-neutral-400 hover:text-neutral-300 cursor-pointer"
+              >
+                <MdClose className="size-6" />
               </div>
-              <div className="mb-2 flex flex-row items-center">
-                <div className="mt-1 w-4/5">
-                  <input
-                    type="text"
-                    name="steps"
-                    id="stepsSub"
-                    value={editSubgoals[index].name}
-                    onChange={(event) => handleStepChange(event, index)}
-                    className="w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-                {index > 0 ? (
-                  <span
-                    onClick={() => handleRemoveStep(index)}
-                    className="ml-2 text-neutral-500 text-xl hover:text-neutral-400 cursor-pointer"
-                  >
-                    <MdDelete />
-                  </span>
+            </div>
+            <div className="text-gray-600">Details and customization</div>
+          </div>
+
+          {editItems.map((name, index) => (
+            <div className="mt-6 grid grid-cols-3 border-gray-200 border-b">
+              <div className="ml-12 col-span-1 font-semibold">{name}</div>
+              <div className="col-span-2 mb-6 text-gray-700">
+                {index === 0 && !open.logModal ? (
+                  <div className="">
+                    <input
+                      type="text"
+                      name="goalName"
+                      id="goalName"
+                      placeholder="What is your goal?"
+                      autoComplete="off"
+                      value={goalStates.editedGoal.goalName}
+                      onChange={handleEdit}
+                      className={`w-2/3 ${inputFieldClass}`}
+                    />
+                  </div>
+                ) : index === 1 && !open.logModal ? (
+                  <div className="">
+                    <select
+                      id="category"
+                      name="category"
+                      value={goalStates.editedGoal.category}
+                      onChange={handleEdit}
+                      className={`${inputFieldClass}`}
+                    >
+                      <option value="N/A">None</option>
+                      {categories.map((category, index) => (
+                        <option value={category}>{category}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : index === 2 && !open.logModal ? (
+                  <div>
+                    <input
+                      type="date"
+                      name="endDate"
+                      id="endDate"
+                      value={goalStates.editedGoal.endDate}
+                      onChange={handleEdit}
+                      className={`${inputFieldClass}`}
+                    />
+                  </div>
+                ) : index === 3 && !open.logModal ? (
+                  <div>
+                    <select
+                      id="goalType"
+                      name="goalType"
+                      value={goalStates.editedGoal.goalType}
+                      onChange={handleEdit}
+                      className={`${inputFieldClass}`}
+                    >
+                      {goalTypes.map((type, index) => (
+                        <option value={index}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : index === 4 || open.logModal ? (
+                  <>
+                    {goalStates.editedGoal.goalType === 1 ? (
+                      <div className="flex flex-col gap-y-2">
+                        {(goalStates.editedGoal.steps as Step[]).map(
+                          (step, index) => (
+                            <Field className="flex items-center gap-x-2">
+                              <Checkbox
+                                checked={step.done}
+                                onChange={() => handleSubgoalUpdate(index)}
+                                className="group block size-4 rounded border bg-white data-[checked]:bg-gray-200"
+                              >
+                                <FaCheck className="fill-gray-500 size-4 opacity-0 group-data-[checked]:opacity-100" />
+                              </Checkbox>
+                              {step.done ? (
+                                <Label className="my-1 ml-1 line-through text-neutral-500">
+                                  {step.name}
+                                </Label>
+                              ) : (
+                                <>
+                                  <input
+                                    type="text"
+                                    name="steps"
+                                    id="stepsSub"
+                                    value={step.name}
+                                    onChange={(event) =>
+                                      handleStepChange(event, index)
+                                    }
+                                    className="w-2/3 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                  />
+                                  {index > 0 && (
+                                    <span
+                                      onClick={() => handleStepDelete(index)}
+                                      className="ml-2 text-neutral-500 hover:text-neutral-400 cursor-pointer"
+                                    >
+                                      <MdDelete className="size-5" />
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </Field>
+                          )
+                        )}
+                        <div
+                          onClick={handleNewStep}
+                          className="cursor-pointer text-neutral-500 hover:text-neutral-400"
+                        >
+                          <span className="float-left pr-1 pt-1">
+                            <FaPlus />
+                          </span>
+                          <h1 className="inline">Add a step</h1>
+                        </div>
+                      </div>
+                    ) : goalStates.editedGoal.goalType === 2 ? (
+                      <div>
+                        <div className="flex items-center">
+                          <div className="font-semibold">Progress: </div>
+                          <input
+                            type="number"
+                            min="0"
+                            name="steps"
+                            id="stepsRatio"
+                            defaultValue={
+                              (goalStates.editedGoal.steps as Ratio).done
+                            }
+                            onChange={handleRatioDoneUpdate}
+                            className={`ml-2 ${inputFieldClass}`}
+                          />
+                        </div>
+                        <div className="mt-2 flex items-center">
+                          <div className="font-semibold">Target: </div>
+                          <input
+                            type="number"
+                            min="0"
+                            name="steps"
+                            id="stepsRatio"
+                            defaultValue={
+                              (goalStates.editedGoal.steps as Ratio).target
+                            }
+                            onChange={handleRatioTargetUpdate}
+                            className={`ml-2 ${inputFieldClass}`}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <Field className="flex items-center gap-2">
+                        <Checkbox
+                          checked={goalStates.editedGoal.completed === 100}
+                          onChange={() => {
+                            if (!isEdited) setIsEdited(true);
+                            setGoalStates((prevState) => ({
+                              ...prevState,
+                              editedGoal: {
+                                ...prevState.editedGoal,
+                                completed:
+                                  prevState.editedGoal.completed === 0
+                                    ? 100
+                                    : 0,
+                              },
+                            }));
+                          }}
+                          className="group block size-4 rounded border bg-white data-[checked]:bg-gray-200"
+                        >
+                          <FaCheck className="fill-gray-500 size-4 opacity-0 group-data-[checked]:opacity-100" />
+                        </Checkbox>
+                        <Label>Completed?</Label>
+                      </Field>
+                    )}
+                  </>
+                ) : index === 5 && !open.logModal ? (
+                  <div>
+                    <textarea
+                      id="description"
+                      name="description"
+                      placeholder="Enter a description..."
+                      value={goalStates.editedGoal.description}
+                      onChange={handleEdit}
+                      rows={3}
+                      className={`w-2/3 ${inputFieldClass}`}
+                    />
+                  </div>
                 ) : (
-                  <></>
+                  index === 6 &&
+                  !open.logModal && (
+                    <div className="flex items-center">
+                      Repeat every
+                      <div>
+                        <input
+                          type="text"
+                          name="repetition"
+                          id="repetition"
+                          value={goalStates.editedGoal.repetition}
+                          onChange={handleEdit}
+                          className={`mx-2 ${inputFieldClass}`}
+                        />
+                      </div>
+                      day(s)
+                    </div>
+                  )
                 )}
               </div>
-            </>
+            </div>
           ))}
-          <div
-            onClick={handleNewStep}
-            className="mt-2 cursor-pointer text-neutral-500 hover:text-neutral-400"
-          >
-            <span className="float-left pr-1 pt-1">
-              <FaPlus />
-            </span>
-            <h1 className="inline">Add a step</h1>
-          </div>
-        </div>
-
-        <div
-          className={`transition-all duration-1000 overflow-hidden ${
-            descriptionExpanded ? "max-h-32" : "max-h-0"
-          }`}
-        >
-          <label
-            htmlFor="about"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Description
-          </label>
-          <div className="mt-2">
-            <textarea
-              id="description"
-              name="description"
-              value={goalStates.editedGoal.description}
-              onChange={handleEdit}
-              rows={3}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-          <p className="mt-3 text-sm leading-6 text-gray-600"></p>
-        </div>
-
-        <div
-          onClick={() => setDescriptionExpanded(!descriptionExpanded)}
-          className="cursor-pointer text-neutral-500 hover:text-neutral-400"
-        >
-          <span className="float-left pr-1 pt-1">
-            {descriptionExpanded ? <FaMinus /> : <FaPlus />}
-          </span>
-          <h1 className="inline">Add a description</h1>
-        </div>
-
-        <div
-          className={`flex flex-row transition-all duration-1000 overflow-hidden ${
-            repetitionExpanded ? "max-h-32" : "max-h-0"
-          }`}
-        >
-          <label className="mt-4 mr-2 text-sm font-medium leading-6 text-gray-900">
-            Repeat every
-          </label>
-          <div className="mt-2 w-20">
-            <input
-              type="text"
-              name="repetition"
-              id="repetition"
-              value={goalStates.editedGoal.repetition}
-              onChange={handleEdit}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-          <label className="mt-4 ml-2 text-sm font-medium leading-6 text-gray-900">
-            day(s)
-          </label>
-        </div>
-
-        <div
-          onClick={() => setRepetitionExpanded(!repetitionExpanded)}
-          className="cursor-pointer text-neutral-500 hover:text-neutral-400"
-        >
-          <span className="float-left pr-1 pt-1">
-            {repetitionExpanded ? <FaMinus /> : <FaPlus />}
-          </span>
-          <h1 className="inline">Add repetition</h1>
         </div>
       </>
     );
@@ -661,8 +692,22 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
                 Edit
               </button>
             </MenuItem>
-            {goalStates.displayedGoal.completed !== 100 ? (
+            {goalStates.displayedGoal.completed !== 100 && (
               <>
+                <MenuItem>
+                  <button
+                    onClick={() =>
+                      setOpen((prevState) => ({
+                        logModal: true,
+                        menuModal: true,
+                      }))
+                    }
+                    className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-black/10"
+                  >
+                    <FaCheck className="size-4 fill-slate-700" />
+                    Log Progress
+                  </button>
+                </MenuItem>
                 <MenuItem>
                   <button
                     onClick={handleClickComplete}
@@ -673,8 +718,6 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
                   </button>
                 </MenuItem>
               </>
-            ) : (
-              <></>
             )}
             <MenuItem>
               <button
@@ -694,13 +737,13 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
   return (
     <>
       <div
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen({ logModal: false, menuModal: true })}
         className="relative max-w-lg min-w-fit my-2 px-5 py-4 bg-gray-100 rounded border border-gray-200 drop-shadow-[0_4px_3px_rgba(0,0,0,0.2)]"
       >
         <div className="mb-3 flex flex-row items-center justify-between">
           <div className="flex">
-            <span className="mt-0.5 mr-3 text-xl">
-              <GoGoal />
+            <span className="mt-0.5 mr-3">
+              <GoGoal className="size-6" />
             </span>
             <h1
               className={clsx(
@@ -713,23 +756,23 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
               {goalStates.displayedGoal.goalName}
             </h1>
           </div>
-          {goalStates.displayedGoal.completed !== 100 ? threeDotsMenu() : <></>}
+          {goalStates.displayedGoal.completed !== 100 && threeDotsMenu()}
         </div>
 
         <div className="mb-4 flex gap-x-2 gap-y-1 text-sm text-slate-700 items-center flex-wrap">
-          <div className="bg-slate-200 w-fit rounded-sm">
-            <h2 className="py-0.5 px-3 font-semibold">
-              {goalStates.displayedGoal.category}
-            </h2>
-          </div>
-          {goalStates.displayedGoal.repetition > 0 ? (
+          {goalStates.displayedGoal.category !== "" && (
+            <div className="bg-slate-200 w-fit rounded-sm">
+              <h2 className="py-0.5 px-3 font-semibold">
+                {goalStates.displayedGoal.category}
+              </h2>
+            </div>
+          )}
+          {goalStates.displayedGoal.repetition > 0 && (
             <div className="bg-slate-200 w-fit rounded-sm">
               <h2 className="py-0.5 px-3 font-semibold">
                 Repeating in {daysUntilRepeat} days
               </h2>
             </div>
-          ) : (
-            <></>
           )}
           <div
             className={`py-0.5 rounded-sm flex items-center justify-center bg-slate-200`}
@@ -773,8 +816,10 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
           </div>
         </div>
 
-        {goalStates.displayedGoal.completed !== 100 ? (
-          <div className="text-sm flex justify-end">
+        <div className="h-3" />
+
+        {goalStates.displayedGoal.completed !== 100 && (
+          <div className="absolute bottom-4 right-4 text-sm flex justify-end">
             {daysLeft >= 0 ? (
               <div className="text-neutral-500">{daysLeft} day(s) left </div>
             ) : (
@@ -783,135 +828,47 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
               </div>
             )}
           </div>
-        ) : (
-          <div className="h-5" />
         )}
-        {goalStates.displayedGoal.completed === 100 ? (
+        {goalStates.displayedGoal.completed === 100 && (
           <div className="absolute rounded inset-0 bg-neutral-500 bg-opacity-30 z-10">
             <span className="mr-5 mt-4 float-right">{threeDotsMenu()}</span>
           </div>
-        ) : (
-          <></>
         )}
       </div>
 
-      <Dialog className="relative z-10" open={open} onClose={setOpen}>
+      <Dialog
+        className="relative z-10"
+        open={open.menuModal}
+        onClose={() =>
+          setOpen((prevState) => ({ ...prevState, menuModal: false }))
+        }
+      >
         <DialogBackdrop
           transition
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
+          className="fixed inset-0 bg-gray-500 bg-opacity-80 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
         />
 
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <DialogPanel
               transition
-              className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-lg data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95"
+              className="relative w-1/2 transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95"
             >
-              <div className="bg-white p-6 pb-4">
+              <div className="bg-white">
                 <div className="w-full">
-                  <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                    {!editMode ? (
-                      <>
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center text-2xl">
-                            <span className="mr-3">
-                              <GoGoal />
-                            </span>
-                            {goalStates.displayedGoal.goalName}
-                          </div>
-                          <div
-                            onClick={() => setOpen(false)}
-                            className="text-2xl text-neutral-400 hover:text-neutral-300 cursor-pointer"
-                          >
-                            <MdClose />
-                          </div>
-                        </div>
-
-                        <div className="mt-2 text-lg text-black">
-                          <div className="mb-4 bg-slate-300 w-fit text-base rounded-sm">
-                            <h2 className="py-0.5 px-3 font-semibold">
-                              {goalStates.displayedGoal.category}
-                            </h2>
-                          </div>
-                          <div className="">Description:</div>
-                          <div className="">
-                            {goalStates.displayedGoal.description}
-                          </div>
-                          Deadline: {goalStates.displayedGoal.endDate}
-                          <br />
-                          Repetition: {goalStates.displayedGoal.repetition}
-                          <br />
-                          Goal Type:{" "}
-                          {goalTypes[goalStates.displayedGoal.goalType]}
-                          <br />
-                          Progress: {goalStates.displayedGoal.completed}%<br />
-                          Steps:
-                          <br />
-                          {goalStates.displayedGoal.goalType === 1 ? (
-                            <div className="flex flex-col gap-y-2">
-                              {(goalStates.displayedGoal.steps as Step[]).map(
-                                (step, index) => (
-                                  <Field className="text-base flex items-center gap-x-2">
-                                    <Checkbox
-                                      checked={step.done}
-                                      onChange={() =>
-                                        handleSubgoalUpdate(index)
-                                      }
-                                      className="group block size-4 rounded border bg-white data-[checked]:bg-slate-300"
-                                    >
-                                      <FaCheck className="opacity-0 group-data-[checked]:opacity-100" />
-                                    </Checkbox>
-                                    <Label
-                                      className={
-                                        step.done
-                                          ? `line-through text-neutral-500`
-                                          : ``
-                                      }
-                                    >
-                                      {step.name}
-                                    </Label>
-                                  </Field>
-                                )
-                              )}
-                            </div>
-                          ) : goalStates.displayedGoal.goalType === 2 ? (
-                            <div>
-                              <div className="mt-2">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  name="steps"
-                                  id="stepsRatio"
-                                  value={
-                                    (goalStates.displayedGoal.steps as Ratio)
-                                      .done
-                                  }
-                                  onChange={(
-                                    e: React.ChangeEvent<HTMLInputElement>
-                                  ) =>
-                                    handleRatioUpdate(Number(e.target.value))
-                                  }
-                                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                />
-                              </div>
-                              /{" "}
-                              {(goalStates.displayedGoal.steps as Ratio).target}
-                            </div>
-                          ) : (
-                            <></>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      editModePanel()
-                    )}
+                  <div className="mt-3 text-center sm:mt-0 sm:text-left">
+                    {editModePanel()}
                   </div>
                 </div>
               </div>
               <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                 <button
                   type="button"
-                  className="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 sm:ml-3 sm:w-auto"
+                  className={`${
+                    isEdited
+                      ? "bg-green-600 hover:bg-green-500"
+                      : "bg-gray-300 cursor-default"
+                  } inline-flex w-full transition justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm sm:ml-3 sm:w-auto`}
                   onClick={handleClickSave}
                 >
                   Save
@@ -920,7 +877,11 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
                   type="button"
                   className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:ml-3 sm:mt-0 sm:w-auto"
                   onClick={() => {
-                    setOpen(false);
+                    setOpen((prevState) => ({
+                      ...prevState,
+                      menuModal: false,
+                    }));
+                    setIsEdited(false);
                     setGoalStates((prevState) => ({
                       ...prevState,
                       editedGoal: prevState.displayedGoal,
@@ -930,22 +891,16 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
                 >
                   Cancel
                 </button>
-                <button
-                  type="button"
-                  className="mt-3 inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-red-500 sm:mt-0 sm:w-auto"
-                  onClick={handleClickDelete}
-                  data-autofocus
-                >
-                  Delete
-                </button>
-                <button
-                  type="button"
-                  className="mt-3 inline-flex w-full justify-center rounded-md bg-neutral-400 px-3 py-2 text-sm font-semibold text-black shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-red-500 sm:mt-0 sm:w-auto"
-                  onClick={handleSwapEditMode}
-                  data-autofocus
-                >
-                  Edit
-                </button>
+                {!open.logModal && (
+                  <button
+                    type="button"
+                    className="mt-3 inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-red-500 sm:mt-0 sm:w-auto"
+                    onClick={handleClickDelete}
+                    data-autofocus
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </DialogPanel>
           </div>

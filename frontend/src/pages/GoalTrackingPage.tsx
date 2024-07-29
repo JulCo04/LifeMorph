@@ -20,7 +20,7 @@ const GoalTrackingPage: React.FC = () => {
   const TabNames = ["All", "Not Started", "In Progress", "Completed"];
 
   const categories = [
-    "--Select a category--",
+    "--Sort by category--",
     "Personal Development",
     "Health & Fitness",
     "Career",
@@ -124,7 +124,6 @@ const GoalTrackingPage: React.FC = () => {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
         setGoals(goals.filter((goal) => goal.id !== id));
       })
       .catch((error) => console.error("Error deleting goal:", error));
@@ -184,15 +183,12 @@ const GoalTrackingPage: React.FC = () => {
               <AddGoalButton handleAddGoal={handleAddGoal} />
             </TabList>
             <TabPanels className="mt-2">
-              <div className="ml-6 p-10 h-full float-right border-l-2 border-neutral-400">
-                statistics go here aaaaaaaaaa
-              </div>
               <Select
                 name="category"
                 aria-label="Goal category"
                 onChange={handleCategoryFilter}
               >
-                {categories.map((category, index) => (
+                {categories.map((category) => (
                   <option value={category}>{category}</option>
                 ))}
               </Select>

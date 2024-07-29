@@ -44,8 +44,6 @@ app.get('/api/goals', async (req, res) => {
       res.status(500).json({ error: 'Internal server error' });
   }
 });
-// Serve static files for uploaded photos
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Display all Users
 app.get('/api/users', async (req: Request, res: Response) => {
@@ -234,13 +232,6 @@ app.post('/api/contacts', async (req: Request, res: Response) => {
     const { firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links } = req.body;
     let photoPath = null;
 
-    if (req.files && req.files.photo) {
-      const photo = req.files.photo as UploadedFile;
-      const uploadPath = path.join(__dirname, 'uploads', photo.name);
-      await photo.mv(uploadPath);
-      photoPath = `/uploads/${photo.name}`;
-    }
-
     const [result] = await pool.query(
       'INSERT INTO contacts (firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links, photoPath]
@@ -291,12 +282,6 @@ app.put('/api/contacts/:contactId', async (req: Request, res: Response) => {
   let photoPath = null;
 
   try {
-    if (req.files && req.files.photo) {
-      const photo = req.files.photo as UploadedFile;
-      const uploadPath = path.join(__dirname, 'uploads', photo.name);
-      await photo.mv(uploadPath);
-      photoPath = `/uploads/${photo.name}`;
-    }
 
     const [result] = await pool.query(
       'UPDATE contacts SET firstName = ?, lastName = ?, relationship = ?, birthday = ?, email = ?, phoneNumber = ?, notes = ?, links = ?, photo = COALESCE(?, photo) WHERE id = ?',

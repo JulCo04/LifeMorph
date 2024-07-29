@@ -3,7 +3,6 @@ import express from 'express';
 import mysql from 'mysql2/promise';
 import cors from 'cors';
 import fileUpload from 'express-fileupload';
-import path from 'path';
 dotenv.config();
 const app = express();
 const port = 3001;
@@ -37,8 +36,6 @@ app.get('/api/goals', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-// Serve static files for uploaded photos
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Display all Users
 app.get('/api/users', async (req, res) => {
     try {
@@ -210,12 +207,6 @@ app.post('/api/contacts', async (req, res) => {
     try {
         const { firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links } = req.body;
         let photoPath = null;
-        if (req.files && req.files.photo) {
-            const photo = req.files.photo;
-            const uploadPath = path.join(__dirname, 'uploads', photo.name);
-            await photo.mv(uploadPath);
-            photoPath = `/uploads/${photo.name}`;
-        }
         const [result] = await pool.query('INSERT INTO contacts (firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [firstName, lastName, relationship, userId, birthday, email, phoneNumber, notes, links, photoPath]);
         if (result && 'insertId' in result) {
             res.status(201).json({ message: 'Contact added successfully', contactId: result.insertId });
@@ -262,12 +253,6 @@ app.put('/api/contacts/:contactId', async (req, res) => {
     const { firstName, lastName, relationship, birthday, email, phoneNumber, notes, links } = req.body;
     let photoPath = null;
     try {
-        if (req.files && req.files.photo) {
-            const photo = req.files.photo;
-            const uploadPath = path.join(__dirname, 'uploads', photo.name);
-            await photo.mv(uploadPath);
-            photoPath = `/uploads/${photo.name}`;
-        }
         const [result] = await pool.query('UPDATE contacts SET firstName = ?, lastName = ?, relationship = ?, birthday = ?, email = ?, phoneNumber = ?, notes = ?, links = ?, photo = COALESCE(?, photo) WHERE id = ?', [firstName, lastName, relationship, birthday, email, phoneNumber, notes, links, photoPath, contactId]);
         if (result && 'affectedRows' in result && result.affectedRows === 1) {
             res.json({ message: 'Contact updated successfully' });

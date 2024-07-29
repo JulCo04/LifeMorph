@@ -466,7 +466,10 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
           </div>
 
           {editItems.map((name, index) => (
-            <div className="mt-6 grid grid-cols-3 border-gray-200 border-b">
+            <div
+              key={index}
+              className="mt-6 grid grid-cols-3 border-gray-200 border-b"
+            >
               <div className="ml-12 col-span-1 font-semibold">{name}</div>
               <div className="col-span-2 mb-6 text-gray-700">
                 {index === 0 && !open.logModal ? (
@@ -491,9 +494,13 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
                       onChange={handleEdit}
                       className={`${inputFieldClass}`}
                     >
-                      <option value="N/A">None</option>
+                      <option key={0} value="N/A">
+                        None
+                      </option>
                       {categories.map((category, index) => (
-                        <option value={category}>{category}</option>
+                        <option key={index + 1} value={category}>
+                          {category}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -518,7 +525,9 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
                       className={`${inputFieldClass}`}
                     >
                       {goalTypes.map((type, index) => (
-                        <option value={index}>{type}</option>
+                        <option key={index} value={index}>
+                          {type}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -528,7 +537,10 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
                       <div className="flex flex-col gap-y-2">
                         {(goalStates.editedGoal.steps as Step[]).map(
                           (step, index) => (
-                            <Field className="flex items-center gap-x-2">
+                            <Field
+                              key={index}
+                              className="flex items-center gap-x-2"
+                            >
                               <Checkbox
                                 checked={step.done}
                                 onChange={() => handleSubgoalUpdate(index)}
@@ -786,13 +798,13 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
                   : "bg-blue-500"
               } rounded-full`}
             />
-            <text className="pr-3 font-semibold">
+            <div className="pr-3 font-semibold">
               {goalStates.displayedGoal.completed === 0
                 ? "Not started"
                 : goalStates.displayedGoal.completed === 100
                 ? "Completed"
                 : "In progress"}
-            </text>
+            </div>
           </div>
         </div>
 

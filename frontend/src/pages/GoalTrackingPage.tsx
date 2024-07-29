@@ -188,8 +188,10 @@ const GoalTrackingPage: React.FC = () => {
                 aria-label="Goal category"
                 onChange={handleCategoryFilter}
               >
-                {categories.map((category) => (
-                  <option value={category}>{category}</option>
+                {categories.map((category, index) => (
+                  <option key={index} value={category}>
+                    {category}
+                  </option>
                 ))}
               </Select>
               {goalTabs.map((type, index) => (

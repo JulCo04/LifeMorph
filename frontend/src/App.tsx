@@ -14,6 +14,7 @@ import ResetPassPage from "./pages/ResetPassPage";
 import SettingsPage from "./pages/SettingsPage";
 import TodoListPage from "./pages/TodoListPage";
 import ContactPage from "./pages/ContactPage";
+import RegisterPage from "./pages/RegisterPage";
 
 const App: React.FC = () => {
   return (
@@ -30,6 +31,7 @@ const App: React.FC = () => {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/todo-list" element={<TodoListPage />} />
         <Route path="/contact-manager" element={<ContactPage />} />
+        <Route path="/register" element={<RegisterPage />} />
       </Routes>
     </BrowserRouter>
   );

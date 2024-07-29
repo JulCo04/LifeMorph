@@ -7,7 +7,10 @@ const DashboardPage: React.FC = () => {
     return (
         <div className='flex'>
             <Sidebar />
-            <APTitleBar title="Finances"/>
+            <div className='w-full'>
+                <APTitleBar title="Finances"/>
+            </div>
+            
         </div>
         
     );

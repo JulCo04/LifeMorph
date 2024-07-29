@@ -48,8 +48,8 @@ app.get('/api/users', async (req, res) => {
 });
 app.post('/api/goals', async (req, res) => {
     try {
-        const { goalName, category, description, endDate, repetition, dateOfRepetition, goalType, steps } = req.body;
-        const [result] = await pool.query('INSERT INTO goals (goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [goalName, category, description, endDate, repetition, dateOfRepetition, goalType, 0, steps]);
+        const { goalName, category, description, endDate, repetition, dateOfRepetition, goalType, steps, completed } = req.body;
+        const [result] = await pool.query('INSERT INTO goals (goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps]);
         if (result && 'insertId' in result) {
             const [rows] = await pool.query('SELECT * FROM goals WHERE id = ?', [result.insertId]);
             if (rows.length > 0) {

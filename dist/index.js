@@ -2,7 +2,6 @@ import dotenv from 'dotenv';
 import express from 'express';
 import mysql from 'mysql2/promise';
 import cors from 'cors';
-import fileUpload from 'express-fileupload';
 dotenv.config();
 const app = express();
 const port = 3001;
@@ -23,12 +22,10 @@ pool.getConnection()
 });
 app.use(express.json());
 app.use(cors());
-app.use(fileUpload());
 // Display all Goals
 app.get('/api/goals', async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM goals');
-        console.log(rows);
         res.json(rows);
     }
     catch (error) {
@@ -295,6 +292,109 @@ app.get('/api/contacts/search', async (req, res) => {
     }
     catch (error) {
         console.error('Error querying the database:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Add a new password for Password Manager
+app.post('/api/password-obj', async (req, res) => {
+    try {
+        const { url, username, password, desc } = req.body;
+        const [result] = await pool.query('INSERT INTO passwords (url, username, password, description) VALUES (?, ?, ?, ?)', [url, username, password, desc]);
+        if (result && 'insertId' in result) {
+            res.status(201).json({ message: 'Password added successfully', passwordId: result.insertId });
+        }
+        else {
+            res.status(500).json({ error: 'Failed to add password' });
+        }
+    }
+    catch (error) {
+        console.error('Error adding password to the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Retrieves passwords for Password Manager
+app.post('/api/get-password-objs', async (req, res) => {
+    try {
+        const { userId } = req.body; // For future use
+        const [rows] = await pool.query('SELECT * FROM passwords');
+        if (rows.length > 0) {
+            res.status(201).json({ message: "Passwords fetched successfully", passwords: rows });
+        }
+        else {
+            res.status(500).json({ error: 'Failed to retrieve passwords' });
+        }
+    }
+    catch (error) {
+        console.error('Error querying the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Edits a password for Password Manager
+app.put('/api/edit-password-obj', async (req, res) => {
+    try {
+        const { id, url, username, password, desc } = req.body;
+        // Update the goal in the database
+        const [result] = await pool.query('UPDATE passwords SET url = ?, username = ?, password = ?, description = ? WHERE id = ?', [url, username, password, desc, id]);
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Password updated successfully' });
+        }
+        else {
+            res.status(500).json({ error: 'Failed to update password' });
+        }
+    }
+    catch (error) {
+        console.error('Error updating the password in the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Deletes a password for Password Manager
+app.delete('/api/delete-password-obj', async (req, res) => {
+    const { passwordId } = req.body;
+    try {
+        const [result] = await pool.query('DELETE FROM passwords WHERE id = ?', [passwordId]);
+        if (result && 'affectedRows' in result && result.affectedRows === 1) {
+            res.json({ message: 'Password deleted successfully' });
+        }
+        else {
+            res.status(404).json({ error: 'Password not found' });
+        }
+    }
+    catch (error) {
+        console.error('Error deleting password from database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Retrieves PIN for given user
+app.post('/api/get-PIN', async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const [rows] = await pool.query('SELECT * FROM pins WHERE userId = ?', userId);
+        if (rows.length > 0) {
+            res.status(201).json({ hasPIN: true, PIN: rows[0].PIN });
+        }
+        else {
+            res.status(500).json({ hasPIN: false, error: 'Failed to retrieve PIN' });
+        }
+    }
+    catch (error) {
+        console.error('Error querying the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Adds new PIN for given user
+app.post('/api/new-PIN', async (req, res) => {
+    try {
+        const { userId, PIN } = req.body;
+        const [result] = await pool.query('INSERT INTO pins (userId, PIN) VALUES (?, ?)', [userId, PIN]);
+        if (result) {
+            res.status(201).json({ message: 'PIN created' });
+        }
+        else {
+            res.status(500).json({ error: 'Failed to create new PIN' });
+        }
+    }
+    catch (error) {
+        console.error('Error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

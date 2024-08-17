@@ -2,6 +2,13 @@ import dotenv from 'dotenv';
 import express, { Request, Response, NextFunction } from 'express';
 import mysql, { FieldPacket, Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import cors from 'cors';
+import nodemailer, { Transporter } from 'nodemailer';
+import { google } from 'googleapis';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+
+
+const OAuth2 = google.auth.OAuth2;
 
 dotenv.config();
 
@@ -27,6 +34,51 @@ pool.getConnection()
 
 app.use(express.json());
 app.use(cors());
+
+const oauth2Client = new OAuth2(
+  "36696501036-kcinmdfdcbk58l1snuo4csko4lu1qnc3.apps.googleusercontent.com",
+  "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", // Client Secret
+  "https://developers.google.com/oauthplayground" // Redirect URL
+);
+
+oauth2Client.setCredentials({
+  refresh_token: "1//049YKg-m0oFGJCgYIARAAGAQSNwF-L9IrCt919XgyLnt_gMHGXuYq-6TPDxyiM_wdiDimBrgK2yZAUNTlNKe7fRl0QqnqHSdawYc"
+});
+const accessToken = oauth2Client.getAccessToken()
+
+const transporter: Transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    type: "OAuth2",
+    clientId: "36696501036-kcinmdfdcbk58l1snuo4csko4lu1qnc3.apps.googleusercontent.com",
+    clientSecret: "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",
+    refreshToken: "1//049YKg-m0oFGJCgYIARAAGAQSNwF-L9IrCt919XgyLnt_gMHGXuYq-6TPDxyiM_wdiDimBrgK2yZAUNTlNKe7fRl0QqnqHSdawYc",
+    user: 'adulteasemail@gmail.com',
+    accessToken: accessToken as any
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
+
+function generateVerificationToken() {
+  return crypto.randomBytes(20).toString('hex');
+}
+
+async function sendVerificationEmail(email: string, verification_token: string): Promise<void> {
+  const mailOptions: nodemailer.SendMailOptions = {
+      from: 'adulteasemail@gmail.com',
+      to: email,
+      subject: 'Email Verification',
+      html: `<p>Click the following link to verify your account: <a href="http://localhost:3001/api/verify?token=${verification_token}">Verify Email</a></p>`
+  };
+
+  try {
+      await transporter.sendMail(mailOptions);
+  } catch (error: any) { 
+      console.error('Error sending verification email:', error);
+  }
+}
 
 // Display all Goals
 app.get('/api/goals', async (req, res) => {
@@ -115,16 +167,16 @@ app.delete('/api/goals/:goalId', async (req, res) => {
 });
 
 
-// Add new user
 app.post('/api/register', async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body;
+    const verification_token = generateVerificationToken();
 
     // Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{12,}$/;
 
-    let warnings: any = {
+    const warnings = {
       showUserWarning: false,
       userWarningMessage: '',
       showEmailWarning: false,
@@ -162,19 +214,49 @@ app.post('/api/register', async (req: Request, res: Response) => {
       return res.status(400).json({ warnings });
     }
 
-    const [result] = await pool.query('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, password]);
+    // Insert user into the database
+    const [result] = await pool.query<ResultSetHeader>('INSERT INTO users (username, email, password, verification_token) VALUES (?, ?, ?, ?)', [username, email, password, verification_token]);
+
     if (result && 'insertId' in result) {
-      res.status(201).json({ message: 'User added successfully', userId: (result as any).insertId });
+      res.status(201).json({ message: 'User added successfully', userId: result.insertId });
+      await sendVerificationEmail(email, verification_token);
     } else {
       res.status(500).json({ error: 'Failed to add user' });
     }
-  } catch (error: any) {
-    console.error('Error adding user to the database:', error.message);
+  } catch (error) {
+    console.error('Error adding user to the database:', (error as Error).message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Login User
+
+app.get('/api/verify', async (req: Request, res: Response) => {
+  const { token } = req.query;
+  console.log('Token received:', token);
+
+  try {
+    if (!token) {
+      return res.status(400).send('Verification token is required.');
+    }
+
+    const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM users WHERE verification_token = ?', [token]);
+    console.log('Database response:', rows);
+
+    if (rows.length > 0) {
+      const user = rows[0];
+      console.log('Verifying user:', user);
+
+      await pool.query('UPDATE users SET verified = ?, verification_token = NULL WHERE id = ?', [true, user.id]);
+      res.send('Account verified successfully. You can now login.');
+    } else {
+      res.status(404).send('Invalid or expired verification token.');
+    }
+  } catch (error) {
+    console.error('Error verifying account:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+ /*Login User
 app.post('/api/login', async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -202,8 +284,122 @@ app.post('/api/login', async (req: Request, res: Response) => {
     console.error('Error while logging in:', err);
     res.status(500).json({ message: 'Server error' });
   }
+});*/
+
+app.post('/api/login', async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+
+    // Query to find the user by email and password
+    const sql = 'SELECT * FROM users WHERE email = ? AND password = ?';
+    const values = [email, password];
+
+    // Execute the query using the pool
+    const [results, fields] = await pool.query<RowDataPacket[]>(sql, values);
+
+    // If a user with the given email and password exists
+    if (results.length > 0) {
+      const user = results[0];
+
+      // Check if the user is verified
+      if (!user.verified) {
+        return res.status(401).json({ message: 'Please verify your email before logging in.' });
+      }
+
+      console.log('User logged in:', user);
+
+      // Optionally, you can send back some data or a success message
+      res.status(200).json({ message: 'Logged in successfully', user });
+    } else {
+      // If no user is found with the given credentials
+      res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+  } catch (err) {
+    console.error('Error while logging in:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
+
+
+
+
+// Function to generate a unique token for password reset
+function generateResetToken(email: any) {
+    return jwt.sign({ email }, process.env.JWT_SECRET!, { expiresIn: '1h' });
+}
+
+// Function to verify the reset token
+function verifyResetToken(token: string): string | null {
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+        return (decoded as any).email;
+    } catch (error) {
+        return null;
+    }
+}
+
+
+app.post('/api/forgot-password', async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    // Check if the user exists
+    const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM users WHERE email = ?', [email]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'User with this email does not exist.' });
+    }
+
+    // Generate a reset token
+    const resetToken = generateResetToken(email);
+    await pool.query('UPDATE users SET resetToken = ? WHERE email = ?', [resetToken, email]);
+
+    // Send reset password email
+    const resetPasswordUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+    const mailOptions: nodemailer.SendMailOptions = {
+      from: 'adulteasemail@gmail.com',
+      to: email,
+      subject: 'Password Reset Request',
+      html: `<p>You requested a password reset. Click the following link to reset your password: <a href="${resetPasswordUrl}">Reset Password</a></p>`
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: 'Password reset email sent successfully.' });
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.post('/api/reset-password', async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    // Verify the token
+    const email = verifyResetToken(token);
+    if (!email) {
+      return res.status(400).json({ message: 'Invalid or expired token.' });
+    }
+
+    // Update the user's password
+    const [result]: [ResultSetHeader, FieldPacket[]] = await pool.query('UPDATE users SET password = ? WHERE email = ?', [newPassword, email]);
+
+    // Log the result to inspect its structure
+    console.log('Update Result:', result);
+
+    // Check the affectedRows property to see if any rows were updated
+    if (result.affectedRows > 0) {
+      res.status(200).json({ message: 'Password reset successfully.' });
+    } else {
+      res.status(500).json({ message: 'Failed to reset password.' });
+    }
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // Remove a user
 app.delete('/api/users/:userId', async (req: Request, res: Response) => {

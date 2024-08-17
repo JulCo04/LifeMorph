@@ -200,6 +200,344 @@ app.delete('/api/users/:userId', async (req: Request, res: Response) => {
 });
 
 
+// Setup finance defautlts
+app.post('/api/setup-finance', async (req:Request, res: Response) => {
+  
+  try {
+
+    const userId = req.body.userId;
+
+    if (!userId) {
+      return res.status(400).json({error: 'User ID is required'});
+    }
+
+    // Query to find the user by email and password
+    const categories = [
+      'Wage', 'Rent', 'Insurance', 'Loans', 'Savings', 'Food', 'Entertainment', 'Utilities', 'Telephone', 
+      'Medical', 'Clothing', 'Gifts', 'Personal Care', 'Transportation', 'Other'
+    ];
+
+    const categoriesValues = categories.flatMap(category => [category, userId]);
+
+    const sums = [
+      'Income', 'Expense', 'Fixed', 'Variable', 'UserTotal'
+    ];
+
+    const sumsValues = sums.flatMap(category => [category, userId]);
+    
+    const categoriesQuery = `
+        INSERT INTO FinCategories (name, total, userId) 
+        VALUES 
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?),
+            (?, 0, ?);
+    `;
+
+    const sumsQuery = `
+      INSERT INTO FinSums (name, total, userId) 
+      VALUES 
+      (?, 0, ?),
+      (?, 0, ?),
+      (?, 0, ?),
+      (?, 0, ?),
+      (?, 0, ?)
+    `;
+    
+
+    // Insert 10 empty tracking rows with NULL values
+    const rowQuery = `
+      INSERT INTO FinRows (name, categoryId, term, date, flow, total, userId) 
+      VALUES 
+        (NULL, NULL, NULL, NULL, NULL, 0, ?),
+        (NULL, NULL, NULL, NULL, NULL, 0, ?),
+        (NULL, NULL, NULL, NULL, NULL, 0, ?),
+        (NULL, NULL, NULL, NULL, NULL, 0, ?),
+        (NULL, NULL, NULL, NULL, NULL, 0, ?),
+        (NULL, NULL, NULL, NULL, NULL, 0, ?),
+        (NULL, NULL, NULL, NULL, NULL, 0, ?),
+        (NULL, NULL, NULL, NULL, NULL, 0, ?),
+        (NULL, NULL, NULL, NULL, NULL, 0, ?),
+        (NULL, NULL, NULL, NULL, NULL, 0, ?),
+        (NULL, NULL, NULL, NULL, NULL, 0, ?),
+        (NULL, NULL, NULL, NULL, NULL, 0, ?)
+    `;
+
+    const rowValues = Array(12).fill(userId);
+
+
+    // Execute the query using the pool
+    await pool.query(categoriesQuery, categoriesValues);
+    await pool.query(sumsQuery, sumsValues);
+    await pool.query(rowQuery, rowValues);
+
+
+    console.log('Successfully setup finance', [userId]);
+    res.status(200).json({ message: 'Successfully setup finance' });
+
+  } catch (err) {
+    console.error('Error setting up finance:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+
+});
+
+// Insert tracking row
+app.post('/api/insert-tracking-row', async (req: Request, res: Response) => {
+  try {
+    const { name, categoryId, term, date, flow, total, userId } = req.body;
+
+    const rowQuery = `
+    INSERT INTO FinRows (name, categoryId, term, date, flow, total, userId) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    const rowValues = [name, categoryId, term, date, flow, total, userId];
+
+    // Execute the insertion query and get the last inserted ID
+    const [result] = await pool.query<mysql.ResultSetHeader>(rowQuery, rowValues);
+    const insertedId = result.insertId;
+    console.log(insertedId);
+
+    // Fetch the newly inserted row using the last inserted ID
+    const fetchRowQuery = `
+    SELECT * FROM FinRows WHERE rowId = ?
+    `;
+    const [rows] = await pool.query<mysql.RowDataPacket[]>(fetchRowQuery, [insertedId]);
+
+    if (rows.length > 0) {
+      console.log("Successfully added tracking row");
+      res.status(200).json({ message: 'Successfully added tracking row', row: rows[0] });
+    } else {
+      res.status(404).json({ message: 'Row not found' });
+    }
+  } catch (err) {
+    console.error('Server error', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete tracking row
+app.post('/api/delete-tracking-row', async (req:Request, res: Response) => {
+  
+  try {
+
+    const rowId = req.body.rowId;
+
+    const rowQuery = "DELETE FROM FinRows WHERE rowId = ?";
+
+    await pool.query(rowQuery, rowId);
+
+    console.log(`Successfully deleted tracking row [${rowId}]`);
+    res.status(200).json({ message: `Successfully deleted tracking row [${rowId}]` });
+
+  } catch (err) {
+    console.error('Server error', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+
+});
+
+// Update tracking row
+app.post('/api/update-tracking-row', async (req:Request, res: Response) => {
+  
+  try {
+
+    const {name, categoryId, term, date, flow, total, rowId, userId} = req.body;
+
+    const rowQuery = `
+      UPDATE FinRows
+      SET
+      name = ?, 
+      categoryId = ?,
+      term = ?,
+      date = ?,
+      flow = ?,
+      total = ?
+      WHERE rowId = ? AND userId = ?;
+    `;
+
+    const rowValues = [name, categoryId, term, date, flow, total, rowId, userId]
+
+    await pool.query(rowQuery, rowValues);
+
+    console.log(`Successfully updated tracking row [${rowId}]`);
+    res.status(200).json({ message: `Successfully updatestracking row [${rowId}]` });
+
+  } catch (err) {
+    console.error('Server error', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+
+});
+
+// Insert new category
+app.post('/api/insert-category', async (req:Request, res: Response) => {
+  
+  try {
+
+    const { name, userId } = req.body;
+
+    const categoryQuery = `
+      INSERT INTO FinCategories (name, total, userId) 
+        VALUES 
+            (?, 0, ?);
+    `;
+
+    const categoryValues = [name, userId]
+
+    await pool.query(categoryQuery, categoryValues);
+
+    console.log(`Successfully inserted category [${name}]`);
+    res.status(200).json({ message: `Successfully inserted category [${name}]` });
+
+  } catch (err: any) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      console.error('Duplicate entry error', err);
+      res.status(409).json({ message: 'Duplicate entry error: Category already exists' });
+    } else {
+      console.error('Server error', err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  }
+
+});
+
+// Delete a category
+app.post('/api/delete-category', async (req:Request, res: Response) => {
+  
+  try {
+
+    const { categoryId, userId } = req.body;
+
+    const rowsQuery = `
+      UPDATE FinRows
+      SET categoryId = NULL
+      WHERE categoryId = ?;
+    `;
+
+    await pool.query(rowsQuery, categoryId);
+
+    const categoryQuery = `
+      DELETE FROM fincategories WHERE categoryId = ? and userId = ?;
+    `;
+
+    const categoryValues = [categoryId, userId]
+
+    await pool.query(categoryQuery, categoryValues);
+
+    console.log(`Successfully deleted category`);
+    res.status(200).json({ message: `Successfully deleted category` });
+
+  } catch (err: any) {
+    
+    console.error('Server error', err);
+    res.status(500).json({ message: 'Server error' });
+    
+  }
+
+});
+
+// Get Categories
+app.get('/api/finance-categories/:userId', async (req:Request, res: Response) => {
+  
+  try {
+
+    const userId = req.params.userId;
+
+    const categoriesQuery = 'SELECT * FROM FinCategories WHERE userId = ?';
+
+    const [results] = await pool.query<RowDataPacket[]>(categoriesQuery, userId);
+
+    console.log(`Successfully fetched categories`);
+    console.log(results);
+    res.status(200).json({
+      message: 'Successfully fetched categories',
+      data: results
+    });
+
+  } catch (err: any) {
+    
+    console.error('Server error', err);
+    res.status(500).json({ message: 'Server error' });
+    
+  }
+
+});
+
+// Get Sums
+app.get('/api/finance-sums/:userId', async (req:Request, res: Response) => {
+  
+  try {
+
+    const userId = req.params.userId;
+
+    const sumsQuery = 'SELECT * FROM FinSums WHERE userId = ?';
+
+    const [results] = await pool.query<RowDataPacket[]>(sumsQuery, userId);
+
+    console.log(`Successfully fetched sums`);
+    console.log(results);
+    res.status(200).json({
+      message: 'Successfully fetched sums',
+      data: results
+    });
+
+  } catch (err: any) {
+    
+    console.error('Server error', err);
+    res.status(500).json({ message: 'Server error' });
+    
+  }
+
+});
+
+// Get Rows
+app.get('/api/finance-rows/:userId', async (req:Request, res: Response) => {
+  
+  try {
+
+    const userId = req.params.userId;
+
+    const rowQuery = 'SELECT * FROM FinRows WHERE userId = ?';
+
+    const [results] = await pool.query<RowDataPacket[]>(rowQuery, userId);
+
+    const formattedResults = results.map(result => {
+      if (result.date) {
+        const date = new Date(result.date);
+        result.date = date.toISOString().split('T')[0];
+      }
+      return result;
+    });
+    
+    console.log(`Successfully fetched rows`);
+    console.log(formattedResults);
+    res.status(200).json({
+      message: 'Successfully fetched rows',
+      data: formattedResults
+    });
+
+  } catch (err: any) {
+    
+    console.error('Server error', err);
+    res.status(500).json({ message: 'Server error' });
+    
+  }
+
+});
+
+
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).send('Something broke 💩');
@@ -208,6 +546,5 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
-
 
 

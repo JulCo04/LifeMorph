@@ -37,29 +37,24 @@ const FinancePage: React.FC = () => {
                         >
                         Budget
                         </button>
-                        <button
+                        {/* <button
                         onClick={() => handleTabChange('Visuals')}
                         className={`px-4 py-2 rounded-t-lg text-black ${selectedTab === 'Visuals' ? 'bg-green-300' : 'bg-gradient-to-r from-green-500 to-green-400'}`}
                         >
                         Visuals
-                        </button>
+                        </button> */}
                     </div>
                     <div className={`flex flex-col md:flex-row gap-8 min-w-[95vw] md:min-w-[85vw] min-h-[80vh] h-[80vh] bg-green-300 p-4 rounded-tr-lg rounded-bl-lg rounded-br-lg justify-center items-center`}>
                         <div className={`transition-opacity duration-200 ${transitioning ? 'opacity-0' : 'opacity-100'}`}>
-                            {selectedTab === 'Visuals' && <FinanceVisuals />}
+                            {/* {selectedTab === 'Visuals' && <FinanceVisuals />} */}
                             {selectedTab === 'Budget' && <Budget />}
                             {selectedTab === 'Cash Flow Tracker' && <YearlyTracker />}
                         </div>
                     </div>
                 </div>
             </div>
-            </div>
-
+        </div>
     );
 };
 
 export default FinancePage;
-
-
-// Row Error Handling
-

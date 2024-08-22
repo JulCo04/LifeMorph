@@ -438,6 +438,166 @@ app.get('/api/finance-rows/:userId', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+// Get Income Table
+app.get('/api/finance-income-table/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const rowQuery = 'SELECT * FROM FinIncomeTable WHERE userId = ?';
+        const [results] = await pool.query(rowQuery, userId);
+        const formattedResults = results.map(result => {
+            if (result.date) {
+                const date = new Date(result.date);
+                result.date = date.toISOString().split('T')[0];
+            }
+            return result;
+        });
+        console.log(`Successfully fetched income table`);
+        console.log(formattedResults);
+        res.status(200).json({
+            message: 'Successfully fetched income table',
+            data: formattedResults
+        });
+    }
+    catch (err) {
+        console.error('Server error', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+// Get Fixed Expenses Table
+app.get('/api/finance-fixed-expenses/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const rowQuery = 'SELECT * FROM FinFixedExpensesTable WHERE userId = ?';
+        const [results] = await pool.query(rowQuery, userId);
+        const formattedResults = results.map(result => {
+            if (result.date) {
+                const date = new Date(result.date);
+                result.date = date.toISOString().split('T')[0];
+            }
+            return result;
+        });
+        console.log(`Successfully fetched income table`);
+        console.log(formattedResults);
+        res.status(200).json({
+            message: 'Successfully fetched income table',
+            data: formattedResults
+        });
+    }
+    catch (err) {
+        console.error('Server error', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+// Get Variable Expenses Table
+app.get('/api/finance-variable-expenses/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const rowQuery = 'SELECT * FROM FinVariableExpensesTable WHERE userId = ?';
+        const [results] = await pool.query(rowQuery, userId);
+        const formattedResults = results.map(result => {
+            if (result.date) {
+                const date = new Date(result.date);
+                result.date = date.toISOString().split('T')[0];
+            }
+            return result;
+        });
+        console.log(`Successfully fetched variable expenses table`);
+        console.log(formattedResults);
+        res.status(200).json({
+            message: 'Successfully fetched variable expenses income table',
+            data: formattedResults
+        });
+    }
+    catch (err) {
+        console.error('Server error', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+// Update Budget Income Table
+app.post('/api/update-budget-income-table', async (req, res) => {
+    try {
+        const { budgetIncome, categoryName, userId } = req.body;
+        const rowQuery = `
+      UPDATE FinIncomeTable
+      SET
+      budgetIncome = ?
+      WHERE categoryName = ? AND userId = ?;
+    `;
+        const rowValues = [budgetIncome, categoryName, userId];
+        await pool.query(rowQuery, rowValues);
+        console.log(`Successfully updated income table`);
+        res.status(200).json({ message: `Successfully updated income table` });
+    }
+    catch (err) {
+        console.error('Server error', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+// Update Budget Fixed Expenses Table
+app.post('/api/update-budget-fixed-table', async (req, res) => {
+    try {
+        const { budgetExpense, categoryId, userId } = req.body;
+        const rowQuery = `
+      UPDATE FinFixedExpensesTable
+      SET
+      budgetExpense = ?
+      WHERE categoryId = ? AND userId = ?;
+    `;
+        const rowValues = [budgetExpense, categoryId, userId];
+        await pool.query(rowQuery, rowValues);
+        console.log(`Successfully updated budget fixed expense`);
+        res.status(200).json({ message: `Successfully updated budget fixed expense` });
+    }
+    catch (err) {
+        console.error('Server error', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+// Update Budget Variable Expenses Table
+app.post('/api/update-budget-variable-table', async (req, res) => {
+    try {
+        const { budgetExpense, categoryId, userId } = req.body;
+        const rowQuery = `
+      UPDATE FinVariableExpensesTable
+      SET
+      budgetExpense = ?
+      WHERE categoryId = ? AND userId = ?;
+    `;
+        const rowValues = [budgetExpense, categoryId, userId];
+        await pool.query(rowQuery, rowValues);
+        console.log(`Successfully updated budget variable expense`);
+        res.status(200).json({ message: `Successfully updated budget variable expense` });
+    }
+    catch (err) {
+        console.error('Server error', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+// Get Budget Summary Table
+app.get('/api/finance-budget-summary/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const rowQuery = 'SELECT * FROM BudgetSummaryTable WHERE userId = ?';
+        const [results] = await pool.query(rowQuery, userId);
+        const formattedResults = results.map(result => {
+            if (result.date) {
+                const date = new Date(result.date);
+                result.date = date.toISOString().split('T')[0];
+            }
+            return result;
+        });
+        console.log(`Successfully fetched budget summary table`);
+        console.log(formattedResults);
+        res.status(200).json({
+            message: 'Successfully fetched  budget summary table',
+            data: formattedResults
+        });
+    }
+    catch (err) {
+        console.error('Server error', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send('Something broke 💩');

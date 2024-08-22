@@ -142,7 +142,10 @@ app.post('/api/register', async (req: Request, res: Response) => {
 
     const [result] = await pool.query('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, password]);
     if (result && 'insertId' in result) {
+
+      await setupFinanceForUser(result.insertId);
       res.status(201).json({ message: 'User added successfully', userId: result.insertId });
+
     } else {
       res.status(500).json({ error: 'Failed to add user' });
     }
@@ -201,97 +204,95 @@ app.delete('/api/users/:userId', async (req: Request, res: Response) => {
 
 
 // Setup finance defautlts
-app.post('/api/setup-finance', async (req:Request, res: Response) => {
+async function setupFinanceForUser(userId: number) {
+
+  const categoriesValues = Array(16).fill(userId);
+
+  const sums = [
+    'Income', 'Expense', 'Fixed', 'Variable', 'UserTotal'
+  ];
+
+  const sumsValues = sums.flatMap(category => [category, userId]);
   
-  try {
-
-    const userId = req.body.userId;
-
-    if (!userId) {
-      return res.status(400).json({error: 'User ID is required'});
-    }
-
-    // Query to find the user by email and password
-    const categories = [
-      'Wage', 'Rent', 'Insurance', 'Loans', 'Savings', 'Food', 'Entertainment', 'Utilities', 'Telephone', 
-      'Medical', 'Clothing', 'Gifts', 'Personal Care', 'Transportation', 'Other'
-    ];
-
-    const categoriesValues = categories.flatMap(category => [category, userId]);
-
-    const sums = [
-      'Income', 'Expense', 'Fixed', 'Variable', 'UserTotal'
-    ];
-
-    const sumsValues = sums.flatMap(category => [category, userId]);
-    
-    const categoriesQuery = `
-        INSERT INTO FinCategories (name, total, userId) 
-        VALUES 
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?),
-            (?, 0, ?);
-    `;
-
-    const sumsQuery = `
-      INSERT INTO FinSums (name, total, userId) 
+  const categoriesQuery = `
+      INSERT INTO FinCategories (name, term, total, budgetTotal, userId) 
       VALUES 
-      (?, 0, ?),
-      (?, 0, ?),
-      (?, 0, ?),
-      (?, 0, ?),
-      (?, 0, ?)
-    `;
-    
+        ('Wage', TRUE, 0, 0, ?),
+        ('Rent', TRUE, 0, 0, ?),
+        ('Insurance', TRUE, 0, 0, ?),
+        ('Loans', TRUE, 0, 0, ?),
+        ('Savings', TRUE, 0, 0, ?),
+        ('Food', FALSE, 0, 0, ?),
+        ('Entertainment', FALSE, 0, 0, ?),
+        ('Utilities', TRUE, 0, 0, ?),
+        ('Telephone', TRUE, 0, 0, ?),
+        ('Medical', FALSE, 0, 0, ?),
+        ('Clothing', FALSE, 0, 0, ?),
+        ('Gifts', FALSE, 0, 0, ?),
+        ('Personal Care', FALSE, 0, 0, ?),
+        ('Transportation', FALSE, 0, 0, ?),
+        ('Other Fixed', TRUE, 0, 0, ?),
+        ('Other Variable', FALSE, 0, 0, ?);
+  `;
 
-    // Insert 10 empty tracking rows with NULL values
-    const rowQuery = `
-      INSERT INTO FinRows (name, categoryId, term, date, flow, total, userId) 
-      VALUES 
-        (NULL, NULL, NULL, NULL, NULL, 0, ?),
-        (NULL, NULL, NULL, NULL, NULL, 0, ?),
-        (NULL, NULL, NULL, NULL, NULL, 0, ?),
-        (NULL, NULL, NULL, NULL, NULL, 0, ?),
-        (NULL, NULL, NULL, NULL, NULL, 0, ?),
-        (NULL, NULL, NULL, NULL, NULL, 0, ?),
-        (NULL, NULL, NULL, NULL, NULL, 0, ?),
-        (NULL, NULL, NULL, NULL, NULL, 0, ?),
-        (NULL, NULL, NULL, NULL, NULL, 0, ?),
-        (NULL, NULL, NULL, NULL, NULL, 0, ?),
-        (NULL, NULL, NULL, NULL, NULL, 0, ?),
-        (NULL, NULL, NULL, NULL, NULL, 0, ?)
-    `;
+  const sumsQuery = `
+    INSERT INTO FinSums (name, total, userId) 
+    VALUES 
+    (?, 0, ?),
+    (?, 0, ?),
+    (?, 0, ?),
+    (?, 0, ?),
+    (?, 0, ?)
+  `;
 
-    const rowValues = Array(12).fill(userId);
+  // // Insert 10 empty tracking rows with NULL values
+  // const rowQuery = `
+  //   INSERT INTO FinRows (name, categoryId, term, date, flow, total, userId) 
+  //   VALUES 
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?),
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?),
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?),
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?),
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?),
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?),
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?),
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?),
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?),
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?),
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?),
+  //     (NULL, NULL, 1, NULL, NULL, 0, ?)
+  // `;
 
+  // const rowValues = Array(12).fill(userId);
 
-    // Execute the query using the pool
-    await pool.query(categoriesQuery, categoriesValues);
-    await pool.query(sumsQuery, sumsValues);
-    await pool.query(rowQuery, rowValues);
+  // Create Budget Summary Table
 
+  const budgetSummaryTableQuery = `
+    INSERT INTO BudgetSummaryTable (userId, totalBudgetIncome, totalActualIncome, totalBudgetFixedExpense, totalActualFixedExpense, totalBudgetVariableExpense, 
+              totalActualVariableExpense, totalBudgetExpense, totalActualExpense)
+    VALUES
+    (?, 0, 0, 0, 0, 0, 0, 0, 0);
+  `
 
-    console.log('Successfully setup finance', [userId]);
-    res.status(200).json({ message: 'Successfully setup finance' });
+  // Create income table
+  const incomeTableQuery = `
+    INSERT INTO FinIncomeTable (userId, categoryName, budgetIncome, actualIncome)
+      VALUES
+      (?, "Wage", 0, 0),
+      (?, "Other Income", 0, 0);
+  `;
 
-  } catch (err) {
-    console.error('Error setting up finance:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
+  const incomeTableValues = Array(2).fill(userId);
 
-});
+  // Execute the query using the pool
+  await pool.query(budgetSummaryTableQuery, userId);
+  await pool.query(categoriesQuery, categoriesValues);
+  await pool.query(sumsQuery, sumsValues);
+  // await pool.query(rowQuery, rowValues);
+  await pool.query(incomeTableQuery, incomeTableValues);
+
+  console.log('Successfully setup finance', [userId]);
+};
 
 // Insert tracking row
 app.post('/api/insert-tracking-row', async (req: Request, res: Response) => {

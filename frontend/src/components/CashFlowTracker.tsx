@@ -174,9 +174,12 @@ const CashFlowTracker: React.FC = () => {
         const offset = todaysDate.getTimezoneOffset()
         const formattedTodaysDate = new Date(todaysDate.getTime() - (offset*60*1000)).toISOString().split('T')[0]
 
+        const wageCategory = categories.find(category => category.name === 'Wage');
+        const wageId = wageCategory ? wageCategory.categoryId : null;
+
         const newRow = {
             name: '',
-            categoryId: 1,
+            categoryId: wageId,
             term: 1,
             date: formattedTodaysDate ,
             flow: 1, // At 1 because wage is the first category
@@ -325,179 +328,182 @@ const CashFlowTracker: React.FC = () => {
 
 
     return (
-        <div className='flex gap-8 rounded-md'>
-            {/* Statistics and Categories Section */}
-            <div className='flex flex-col h-[75vh] rounded-br-md pl-5 pr-5 pb-5 gap-4'>
-                {/* Statistics */}
-                <div className='flex flex-col w-full shadow-md'>
-                    <span className='bg-green-400 text-center font-bold text-lg rounded-t-md'>Metrics</span>
-                    <div className='flex flex-col p-5 rounded-b-md bg-slate-100'>
-                        <div className='mb-2 text-2xl flex flex-col justify-center items-center text-center'>
-                            <span className='font-semibold'>Total</span>
-                            <span className='border-2 px-9 rounded-md'>
-                                ${userTotal !== null ? userTotal.toFixed(2) : 'Loading...'}
-                            </span>
+        <div>
+            <h1 className="text-2xl font-bold mb-2">Cash Flow Tracker</h1>
+                <div className='flex gap-8 rounded-md'>
+                {/* Statistics and Categories Section */}
+                <div className='flex flex-col h-[75vh] rounded-br-md pb-5 gap-4'>
+                    {/* Statistics */}
+                    <div className='flex flex-col w-full shadow-md'>
+                        <span className='bg-green-400 text-center font-bold text-lg rounded-t-md'>Metrics</span>
+                        <div className='flex flex-col p-5 rounded-b-md bg-slate-100'>
+                            <div className='mb-2 text-2xl flex flex-col justify-center items-center text-center'>
+                                <span className='font-semibold'>Total</span>
+                                <span className='border-2 px-9 rounded-md'>
+                                    ${userTotal !== null ? userTotal.toFixed(2) : '0.00'}
+                                </span>
+                            </div>
+                            <div className='mb-2 text-xl flex justify-between w-full px-4 border-b border-gray-300'>
+                                <span className='font-semibold text-green-600 w-24'>Income:</span>
+                                <span>${income !== null ? income.toFixed(2) : '0.00'}</span>
+                            </div>
+                            <div className='mb-2 text-xl flex justify-between w-full px-4 border-b border-gray-300'>
+                                <span className='font-semibold text-red-600 w-24'>Expense:</span>
+                                <span>${expense !== null ? expense.toFixed(2) : '0.00'}</span>
+                            </div>
+                            <div className='mb-2 text-xl flex justify-between w-full px-4 border-b border-gray-300'>
+                                <span className='font-semibold w-24'>Fixed:</span>
+                                <span>${fixed !== null ? fixed.toFixed(2) : '0.00'}</span>
+                            </div>
+                            <div className='mb-2 text-xl flex justify-between w-full px-4'>
+                                <span className='font-semibold w-24'>Variable:</span>
+                                <span>${variable !== null ? variable.toFixed(2) : '0.00'}</span>
+                            </div>
                         </div>
-                        <div className='mb-2 text-xl flex justify-between w-full px-4 border-b border-gray-300'>
-                            <span className='font-semibold text-green-600 w-24'>Income:</span>
-                            <span>${income !== null ? income.toFixed(2) : 'Loading...'}</span>
-                        </div>
-                        <div className='mb-2 text-xl flex justify-between w-full px-4 border-b border-gray-300'>
-                            <span className='font-semibold text-red-600 w-24'>Expense:</span>
-                            <span>${expense !== null ? expense.toFixed(2) : 'Loading...'}</span>
-                        </div>
-                        <div className='mb-2 text-xl flex justify-between w-full px-4 border-b border-gray-300'>
-                            <span className='font-semibold w-24'>Fixed:</span>
-                            <span>${fixed !== null ? fixed.toFixed(2) : 'Loading...'}</span>
-                        </div>
-                        <div className='mb-2 text-xl flex justify-between w-full px-4'>
-                            <span className='font-semibold w-24'>Variable:</span>
-                            <span>${variable !== null ? variable.toFixed(2) : 'Loading...'}</span>
+                    </div>
+                    
+
+                    {/* Categories */}
+                    <div className='flex flex-col w-full shadow-md overflow-y-auto'>
+                        <span className='bg-green-400 text-center font-bold text-lg rounded-t-md'>Categories</span>
+                        <div className='flex flex-col p-5 rounded-b-md overflow-y-auto bg-slate-100'>
+                            {/* <div className='flex items-center justify-center gap-4 my-4'>
+                                <input
+                                    className={`rounded-md border text-sm h-fit w-fit py-1 px-4 ${!categoryIsValid ? 'border-red-500' : 'border-gray-300'}`}
+                                    value={categoryInputValue}
+                                    onChange={handleCategoryInputChange}
+                                />
+                                <button
+                                    className='rounded-md border text-sm bg-green-400 h-fit w-fit py-1 px-4'
+                                    onClick={handleAddCategory}
+                                >
+                                    Add
+                                </button>
+                            </div> */}
+                            
+                            {categories.map((category, index) => (
+                                <div
+                                    key={category.categoryId}
+                                    className={`mb-2 text-lg flex justify-between w-full px-4 gap-20 ${index < categories.length - 1 ? 'border-b border-gray-300' : ''}`}
+                                >
+                                    <span className='font-semibold'>{category.name}:</span>
+                                    <div className='flex items-center justify-center gap-2'>
+                                        <span>${category.total}</span>
+                                        {/* {category.categoryId !== null && userId !== null && (
+                                            <TiDeleteOutline 
+                                                className='cursor-pointer hover:text-green-500' 
+                                                onClick={() => handleDeleteCategory(category.categoryId, userId)} 
+                                            />
+                                        )} */}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
                 
-
-                {/* Categories */}
-                <div className='flex flex-col w-full shadow-md overflow-y-auto'>
-                    <span className='bg-green-400 text-center font-bold text-lg rounded-t-md'>Categories</span>
-                    <div className='flex flex-col p-5 rounded-b-md overflow-y-auto bg-slate-100'>
-                        {/* <div className='flex items-center justify-center gap-4 my-4'>
-                            <input
-                                className={`rounded-md border text-sm h-fit w-fit py-1 px-4 ${!categoryIsValid ? 'border-red-500' : 'border-gray-300'}`}
-                                value={categoryInputValue}
-                                onChange={handleCategoryInputChange}
-                            />
-                            <button
-                                className='rounded-md border text-sm bg-green-400 h-fit w-fit py-1 px-4'
-                                onClick={handleAddCategory}
-                            >
-                                Add
-                            </button>
-                        </div> */}
-                        
-                        {categories.map((category, index) => (
-                            <div
-                                key={category.categoryId}
-                                className={`mb-2 text-lg flex justify-between w-full px-4 gap-20 ${index < categories.length - 1 ? 'border-b border-gray-300' : ''}`}
-                            >
-                                <span className='font-semibold'>{category.name}:</span>
-                                <div className='flex items-center justify-center gap-2'>
-                                    <span>${category.total}</span>
-                                    {/* {category.categoryId !== null && userId !== null && (
-                                        <TiDeleteOutline 
-                                            className='cursor-pointer hover:text-green-500' 
-                                            onClick={() => handleDeleteCategory(category.categoryId, userId)} 
-                                        />
-                                    )} */}
-                                </div>
-                            </div>
-                        ))}
+                {/* Table Section */}
+                <div className='flex flex-col h-[73vh] overflow-y-auto rounded-md bg-slate-200 shadow-md'>
+                    {/* Heading */}
+                    <div className='flex bg-green-400 h-10 min-h-10 items-center gap-2 px-2 text-center w-full'>
+                        <p className='w-36'>Date</p>
+                        <p className='w-44'>Total</p>
+                        <p className='w-44'>Name</p>
+                        <p className='w-48'>Category</p>
+                        <p className='w-28'>Flow</p>
+                        <p className='w-20'>Actions</p>
                     </div>
-                </div>
-            </div>
-            
-            {/* Table Section */}
-            <div className='flex flex-col h-[75vh] overflow-y-auto rounded-md bg-slate-200 shadow-md'>
-                {/* Heading */}
-                <div className='flex bg-green-400 h-10 min-h-10 items-center gap-2 px-2 text-center w-full'>
-                    <p className='w-36'>Date</p>
-                    <p className='w-44'>Total</p>
-                    <p className='w-44'>Name</p>
-                    <p className='w-48'>Category</p>
-                    <p className='w-28'>Flow</p>
-                    <p className='w-20'>Actions</p>
-                </div>
-                {/* Table Contents */}
-                {rows.length > 0 ? (
-                    <div className='flex flex-col border bg-slate-100'>
-                        {rows.map((row) => (
-                            <div key={row.rowId} className='flex rounded items-center gap-2 px-2 py-2 w-full border-gray-500'>
-                                {/* Date */}
-                                <input
-                                    type="date"
-                                    value={row.date}
-                                    className='rounded h-10 text-center w-36'
-                                    onChange={(e) => handleInputChange(row.rowId, 'date', e.target.value)}
-                                />
-                                {/* Total */}
-                                <input
-                                    type="number"
-                                    value={row.total}
-                                    className='text-lg rounded h-10 text-center w-44 border-gray-500'
-                                    onChange={(e) => handleInputChange(row.rowId, 'total', e.target.value)}
-                                    min="0"
-                                    step="0.01"
-                                />
-                                {/* Name */}
-                                <input
-                                    type="text"
-                                    value={row.name}
-                                    className='text-lg rounded h-10 text-center w-44 border-gray-500'
-                                    onChange={(e) => handleInputChange(row.rowId, 'name', e.target.value)}
-                                />
-                                {/* Category */}
-                                <select
-                                    className="rounded h-10 text-center w-48 border-gray-500"
-                                    value={row.categoryId || categories[0]?.categoryId}
-                                    onChange={(e) => {
-                                        const selectedCategoryId = parseInt(e.target.value);
-                                        console.log(selectedCategoryId);
-                                        if(!selectedCategoryId){
-                                            const selectedCategory = categories.find(category => category.categoryId === 1);
-                                            handleRowCategoryInputChange(row.rowId, selectedCategoryId, selectedCategory.term);
-                                        } else {
-                                            const selectedCategory = categories.find(category => category.categoryId === selectedCategoryId);
-                                            handleRowCategoryInputChange(row.rowId, selectedCategoryId, selectedCategory.term);
-                                        }
-                                    }}
-                                    >
-                                    {categories.map((category) => (
-                                        <option key={category.categoryId} value={category.categoryId}>
-                                            {category.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {/* Flow */}                                
-                                {   categories && categories.find(category => category.categoryId === row.categoryId)?.name === "Wage" ? (
-                                    <div className={`rounded h-10 text-center w-28 flex items-center justify-center bg-white border border-gray-500`}>
-                                        Income
-                                    </div>
-                                ) : (
+                    {/* Table Contents */}
+                    {rows.length > 0 ? (
+                        <div className='flex flex-col border bg-slate-100'>
+                            {rows.map((row) => (
+                                <div key={row.rowId} className='flex rounded items-center gap-2 px-2 py-2 w-full border-gray-500'>
+                                    {/* Date */}
+                                    <input
+                                        type="date"
+                                        value={row.date}
+                                        className='rounded h-10 text-center w-36'
+                                        onChange={(e) => handleInputChange(row.rowId, 'date', e.target.value)}
+                                    />
+                                    {/* Total */}
+                                    <input
+                                        type="number"
+                                        value={row.total}
+                                        className='text-lg rounded h-10 text-center w-44 border-gray-500'
+                                        onChange={(e) => handleInputChange(row.rowId, 'total', e.target.value)}
+                                        min="0"
+                                        step="0.01"
+                                    />
+                                    {/* Name */}
+                                    <input
+                                        type="text"
+                                        value={row.name}
+                                        className='text-lg rounded h-10 text-center w-44 border-gray-500'
+                                        onChange={(e) => handleInputChange(row.rowId, 'name', e.target.value)}
+                                    />
+                                    {/* Category */}
                                     <select
-                                        className="rounded h-10 text-center w-28 border-gray-500"
-                                        value={row.flow}
-                                        onChange={(e) => handleInputChange(row.rowId, 'flow', parseInt(e.target.value))}
-                                    >
-                                        {Object.entries(flowOptions).map(([value, label]) => (
-                                            <option key={value} value={value}>
-                                                {label}
+                                        className="rounded h-10 text-center w-48 border-gray-500"
+                                        value={row.categoryId || categories[0]?.categoryId}
+                                        onChange={(e) => {
+                                            const selectedCategoryId = parseInt(e.target.value);
+                                            console.log(selectedCategoryId);
+                                            if(!selectedCategoryId){
+                                                const selectedCategory = categories.find(category => category.categoryId === 1);
+                                                handleRowCategoryInputChange(row.rowId, selectedCategoryId, selectedCategory.term);
+                                            } else {
+                                                const selectedCategory = categories.find(category => category.categoryId === selectedCategoryId);
+                                                handleRowCategoryInputChange(row.rowId, selectedCategoryId, selectedCategory.term);
+                                            }
+                                        }}
+                                        >
+                                        {categories.map((category) => (
+                                            <option key={category.categoryId} value={category.categoryId}>
+                                                {category.name}
                                             </option>
                                         ))}
                                     </select>
-                                )}                           
-                                {/* Delete */}
-                                <button
-                                    className='h-10 w-20 px-2 border text-red-500 border-red-500 rounded-md hover:bg-red-500 hover:text-white'
-                                    onClick={() => handleTrackingRowDelete(row.rowId)}
-                                >
-                                    Delete
+                                    {/* Flow */}                                
+                                    {   categories && categories.find(category => category.categoryId === row.categoryId)?.name === "Wage" ? (
+                                        <div className={`rounded h-10 text-center w-28 flex items-center justify-center bg-white border border-gray-500`}>
+                                            Income
+                                        </div>
+                                    ) : (
+                                        <select
+                                            className="rounded h-10 text-center w-28 border-gray-500"
+                                            value={row.flow}
+                                            onChange={(e) => handleInputChange(row.rowId, 'flow', parseInt(e.target.value))}
+                                        >
+                                            {Object.entries(flowOptions).map(([value, label]) => (
+                                                <option key={value} value={value}>
+                                                    {label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}                           
+                                    {/* Delete */}
+                                    <button
+                                        className='h-10 w-20 px-2 border text-red-500 border-red-500 rounded-md hover:bg-red-500 hover:text-white'
+                                        onClick={() => handleTrackingRowDelete(row.rowId)}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            ))}
+                            <div className='flex border p-4 rounded items-center justify-center gap-2 w-full'>
+                                <button onClick={handleTrackingRowInsert} className='bg-green-400 rounded px-5 hover:bg-blue-400'>
+                                    Add New Row
                                 </button>
                             </div>
-                        ))}
-                        <div className='flex border p-4 rounded items-center justify-center gap-2 w-full'>
+                        </div>
+                    ) : (
+                        <div className='flex border p-4 rounded items-center justify-center gap-2 w-full bg-slate-100'>
                             <button onClick={handleTrackingRowInsert} className='bg-green-400 rounded px-5 hover:bg-blue-400'>
                                 Add New Row
                             </button>
                         </div>
-                    </div>
-                ) : (
-                    <div className='flex border p-4 rounded items-center justify-center gap-2 w-full bg-slate-100'>
-                        <button onClick={handleTrackingRowInsert} className='bg-green-400 rounded px-5 hover:bg-blue-400'>
-                            Add New Row
-                        </button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
         

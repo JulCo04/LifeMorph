@@ -42,7 +42,7 @@ const oauth2Client = new OAuth2(
 );
 
 oauth2Client.setCredentials({
-  refresh_token: "1//049YKg-m0oFGJCgYIARAAGAQSNwF-L9IrCt919XgyLnt_gMHGXuYq-6TPDxyiM_wdiDimBrgK2yZAUNTlNKe7fRl0QqnqHSdawYc"
+  refresh_token: "1//04pnKuCPP-E3vCgYIARAAGAQSNwF-L9Iro4WBXP4DEwawbqNI1hbEfz1tLKSbCjK9aJyrF_x44uZ17mnGIkx1bTPFd-oK3IQi_4Y"
 });
 const accessToken = oauth2Client.getAccessToken()
 
@@ -52,7 +52,7 @@ const transporter: Transporter = nodemailer.createTransport({
     type: "OAuth2",
     clientId: "36696501036-kcinmdfdcbk58l1snuo4csko4lu1qnc3.apps.googleusercontent.com",
     clientSecret: "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",
-    refreshToken: "1//049YKg-m0oFGJCgYIARAAGAQSNwF-L9IrCt919XgyLnt_gMHGXuYq-6TPDxyiM_wdiDimBrgK2yZAUNTlNKe7fRl0QqnqHSdawYc",
+    refreshToken: "1//04pnKuCPP-E3vCgYIARAAGAQSNwF-L9Iro4WBXP4DEwawbqNI1hbEfz1tLKSbCjK9aJyrF_x44uZ17mnGIkx1bTPFd-oK3IQi_4Y",
     user: 'adulteasemail@gmail.com',
     accessToken: accessToken as any
   },

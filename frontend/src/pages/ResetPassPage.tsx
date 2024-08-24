@@ -123,7 +123,6 @@ const ResetPassPage: React.FC = () => {
                 <input
                   type="password"
                   name="password"
-                  pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
                   className={`p-2 rounded w-full outline-none border`}
                   onChange={handlePasswordChange}
                   onClick={() => {

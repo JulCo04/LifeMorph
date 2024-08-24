@@ -6,7 +6,7 @@ import APTitleBar from "../components/APTitleBar";
 import { CiLock } from "react-icons/ci";
 import { BsArrowRight, BsThreeDotsVertical } from "react-icons/bs";
 import { VscGlobe } from "react-icons/vsc";
-import { IoMdEye, IoMdEyeOff } from "react-icons/io";
+import { IoMdEye, IoMdEyeOff, IoMdSearch } from "react-icons/io";
 import {
   Dialog,
   DialogBackdrop,
@@ -17,19 +17,6 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { FaPencil, FaTrash } from "react-icons/fa6";
-
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  password: string;
-  created_at: string;
-}
-
-interface Local {
-  message: string;
-  user: User;
-}
 
 interface Password {
   id: number;
@@ -63,7 +50,7 @@ const PasswordManagerPage: React.FC = () => {
     let id = -1;
 
     if (user) {
-      id = ((JSON.parse(user) as Local).user as User).id;
+      id = JSON.parse(user).user.id;
       setUserId(id);
     } else {
       setPageState(-1);
@@ -98,8 +85,7 @@ const PasswordManagerPage: React.FC = () => {
     })
       .then((response) => response.json())
       .then((data) => {
-        if (data.status === 201) setPageState(1);
-        console.log(data);
+        setPageState(1);
       })
       .catch((error) => console.error("Error sending email:", error));
   };
@@ -196,7 +182,7 @@ const PasswordManagerPage: React.FC = () => {
       ) : pageState === 2 ? (
         newPINPage()
       ) : (
-        <div className="place-self-center text-3xl">
+        <div className="w-full text-center place-self-center text-3xl">
           Uh oh... you're not logged in!
         </div>
       )}
@@ -212,6 +198,8 @@ interface PasswordPageProps {
 
 export function PasswordPage({ userId }: PasswordPageProps) {
   const [passwords, setPasswords] = useState<Password[]>([]);
+
+  const [search, setSearch] = useState("");
 
   const [openAddMenu, setOpenAddMenu] = useState(false);
   const [hideAddPassword, setHideAddPassword] = useState(true);
@@ -296,6 +284,10 @@ export function PasswordPage({ userId }: PasswordPageProps) {
     setNewPassword((prevState) => ({ ...prevState, [name]: value }));
   };
 
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value);
+  };
+
   const handleClickSave = () => {
     if (newPassword.url === "") {
       setWarnings({ url: true, password: false });
@@ -339,7 +331,16 @@ export function PasswordPage({ userId }: PasswordPageProps) {
       <div className="w-full">
         <APTitleBar title="Password Manager" />
         <div>
-          <div className="w-1/2 mx-auto mb-8 text-center text-xl font-semibold"></div>
+          <div className="mb-10 relative mx-auto max-w-4xl">
+            <input
+              type="text"
+              id="search"
+              placeholder="Search passwords"
+              onChange={handleSearch}
+              className={`w-full rounded-full border-0 px-11 py-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-1 focus:ring-gray-300`}
+            />
+            <IoMdSearch className="size-5 fill-gray-600 absolute top-2.5 left-3 rounded-full hover:bg-gray-200" />
+          </div>
           <div className="px-4 max-w-6xl mx-auto flex flex-col">
             <div className="pb-4 grid grid-cols-[1fr_1fr_1fr_80px] text-gray-500 font-semibold underline underline-offset-4">
               <div>Website</div>
@@ -354,14 +355,20 @@ export function PasswordPage({ userId }: PasswordPageProps) {
                 </button>
               </div>
             </div>
-            {passwords.map((password, index) => (
-              <PasswordRow
-                key={index}
-                password={password}
-                handleEditPassword={handleEditPassword}
-                handleDeletePassword={handleDeletePassword}
-              />
-            ))}
+            {passwords.map(
+              (password, index) =>
+                password.url.includes(search) && (
+                  <PasswordRow
+                    key={index}
+                    password={password}
+                    handleEditPassword={handleEditPassword}
+                    handleDeletePassword={handleDeletePassword}
+                  />
+                )
+            )}
+          </div>
+          <div className="mt-10 text-center">
+            {passwords.length} sites and apps
           </div>
         </div>
       </div>
@@ -397,7 +404,7 @@ export function PasswordPage({ userId }: PasswordPageProps) {
                       className={`w-full rounded-md border-0 py-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-gray-300`}
                     />
                     {warnings.url && (
-                      <div className="absolute inset-0 top-6 border rounded border-red-400 pointer-events-none" />
+                      <div className="absolute inset-0 top-6 border rounded border-red-500 pointer-events-none" />
                     )}
                   </div>
                   <div>
@@ -436,7 +443,7 @@ export function PasswordPage({ userId }: PasswordPageProps) {
                       )}
                     </span>
                     {warnings.password && (
-                      <div className="absolute inset-0 top-6 border rounded border-red-400 pointer-events-none" />
+                      <div className="absolute inset-0 top-6 border rounded border-red-500 pointer-events-none" />
                     )}
                   </div>
                   <div>
@@ -647,7 +654,7 @@ export function PasswordRow({
                       className={`w-full rounded-md border-0 py-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-gray-300`}
                     />
                     {warnings.url && (
-                      <div className="absolute inset-0 top-6 border rounded border-red-400 pointer-events-none" />
+                      <div className="absolute inset-0 top-6 border rounded border-red-500 pointer-events-none" />
                     )}
                   </div>
                   <div>
@@ -688,7 +695,7 @@ export function PasswordRow({
                       )}
                     </span>
                     {warnings.password && (
-                      <div className="absolute inset-0 top-6 border rounded border-red-400 pointer-events-none" />
+                      <div className="absolute inset-0 top-6 border rounded border-red-500 pointer-events-none" />
                     )}
                   </div>
                   <div>
@@ -726,6 +733,17 @@ export function PasswordRow({
                       data-autofocus
                     >
                       Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="mt-3 inline-flex w-full justify-center rounded-md bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-600 sm:mt-0 sm:w-auto"
+                      onClick={() => {
+                        setOpenModal(false);
+                        handleDeletePassword(password.id);
+                      }}
+                      data-autofocus
+                    >
+                      Delete
                     </button>
                   </div>
                 </div>

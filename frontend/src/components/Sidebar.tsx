@@ -6,7 +6,11 @@ import { FiInbox } from "react-icons/fi";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
 import { TbTargetArrow } from "react-icons/tb";
 import { VscChecklist } from "react-icons/vsc";
-import { RiContactsBook2Fill, RiArrowLeftSLine } from "react-icons/ri";
+import {
+  RiContactsBook2Fill,
+  RiArrowLeftSLine,
+  RiLockPasswordFill,
+} from "react-icons/ri";
 import { CgLogOut } from "react-icons/cg";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -31,6 +35,11 @@ const Sidebar: React.FC = () => {
       path: "/contact-manager",
     },
     { title: "Goal Tracker", icon: <TbTargetArrow />, path: "/goal-tracking" },
+    {
+      title: "Passwords",
+      icon: <RiLockPasswordFill />,
+      path: "/password-manager",
+    },
     {
       title: "Settings",
       spacing: true,
@@ -89,7 +98,7 @@ const Sidebar: React.FC = () => {
               onClick={menu.title === "Logout" ? handleLogout : undefined}
             >
               {/* Line in between each spacing */}
-              {menu.spacing && <hr className="my-4 border-slate-400mt-9" />}
+              {menu.spacing && <hr className="my-4 border-slate-400 mt-9" />}
               <li
                 key={index}
                 className={`text-slate-600 text-sm flex

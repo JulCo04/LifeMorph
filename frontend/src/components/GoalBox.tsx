@@ -750,7 +750,7 @@ function GoalBox({ goal, handleDeleteGoal, handleEditGoal }: Props) {
     <>
       <div
         onClick={() => setOpen({ logModal: false, menuModal: true })}
-        className="relative max-w-lg min-w-fit my-2 px-5 py-4 bg-gray-100 rounded border border-gray-200 drop-shadow-[0_4px_3px_rgba(0,0,0,0.2)]"
+        className="relative max-w-lg min-w-fit my-2 px-5 py-4 bg-gray-100 rounded border border-gray-200 drop-shadow-[0_4px_3px_rgba(0,0,0,0.2)] hover:border-blue-200 hover:shadow-blue-300 hover:shadow"
       >
         <div className="mb-3 flex flex-row items-center justify-between">
           <div className="flex">

@@ -40,7 +40,7 @@ const ForgotPassPage: React.FC = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: email,
+      body: JSON.stringify({ email }),
     })
       .then((response) => response.json())
       .then((data) => {

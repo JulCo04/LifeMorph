@@ -6,20 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(50) NOT NULL,
   email VARCHAR(100) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS goals (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  goalName VARCHAR(255) NOT NULL,
-  category VARCHAR(255) NOT NULL,
-  description TEXT,
-  endDate DATE NOT NULL,
-  repetition INT NOT NULL,
-  dateOfRepetition DATE,
-  goalType INT NOT NULL,
-  completed INT NOT NULL,
-  steps JSON,
+  verification_token VARCHAR(255), -- Added column for verification token
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -39,20 +26,5 @@ CREATE TABLE IF NOT EXISTS contacts (
   FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS passwords (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  url VARCHAR(255) NOT NULL,
-  username VARCHAR(255) NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  description TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS pins (
-  userId INT NOT NULL,
-  PIN VARCHAR(255) NOT NULL
-);
-
 -- Query to select all users
 SELECT * FROM users;
-SELECT * FROM contacts;

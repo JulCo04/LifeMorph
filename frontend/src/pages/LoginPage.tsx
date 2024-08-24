@@ -75,7 +75,7 @@ const LoginPage: React.FC = () => {
 
   const handleContinueWithGoogle = () => {};
 
-  const handleLogin = async () => {
+  /*const handleLogin = async () => {
     const { email, password } = formData;
 
     if (email && password) {
@@ -103,6 +103,60 @@ const LoginPage: React.FC = () => {
       } catch (error: any) {
         console.error("Error registering user:", error.message);
         console.error("Failed to login");
+      }
+    } else {
+      console.error("Failed to login user");
+      setWarnings((prevWarnings) => ({
+        ...prevWarnings,
+        showGeneralWarning: true,
+        generalWarningMessage: "Please fill out all required fields correctly.",
+      }));
+    }
+  };*/
+
+  const handleLogin = async () => {
+    const { email, password } = formData;
+
+    if (email && password) {
+      try {
+        const response = await fetch(buildPath("api/login"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          if (data.message === "Logged in successfully") {
+            localStorage.setItem("user", JSON.stringify(data.user));
+            console.log("User logged in successfully:", data.user);
+            navigate("/dashboard");
+          } else {
+            // Handle other cases such as non-verified emails
+            setWarnings((prevWarnings) => ({
+              ...prevWarnings,
+              showGeneralWarning: true,
+              generalWarningMessage: data.message,
+            }));
+          }
+        } else {
+          console.error("Failed to login user");
+          setWarnings((prevWarnings) => ({
+            ...prevWarnings,
+            showGeneralWarning: true,
+            generalWarningMessage: data.message || "Account doesn't exist.",
+          }));
+        }
+      } catch (error: any) {
+        console.error("Error logging in user:", error.message);
+        setWarnings((prevWarnings) => ({
+          ...prevWarnings,
+          showGeneralWarning: true,
+          generalWarningMessage: "An error occurred. Please try again.",
+        }));
       }
     } else {
       console.error("Failed to login user");

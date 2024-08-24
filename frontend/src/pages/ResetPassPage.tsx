@@ -1,16 +1,19 @@
 import React, { useState } from "react";
 import { FaCheckCircle } from "react-icons/fa";
 import { PiButterflyDuotone } from "react-icons/pi";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 const ResetPassPage: React.FC = () => {
-  const [password, setPassword] = useState("");
+  const [newPassword, setPassword] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const [warning, setWarning] = useState({
     show: false,
     message: "Please provide an password.",
   });
+
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token"); // Extract token from URL
 
   const passwordRegex: RegExp[] = [/.{12,}/, /[A-Z]/, /\d/, /[@$!%*?&]/];
   const passwordRegexDesc = [
@@ -33,14 +36,14 @@ const ResetPassPage: React.FC = () => {
   };
 
   const handleResetPassword = () => {
-    if (password === "") {
+    if (newPassword === "") {
       setWarning({ show: true, message: "Please provide a password." });
       return;
     }
 
     // Testing password regex
     passwordRegex.forEach((reg) => {
-      if (!reg.test(password)) {
+      if (!reg.test(newPassword)) {
         setWarning({ show: true, message: "Password is not valid." });
         return;
       }
@@ -51,7 +54,7 @@ const ResetPassPage: React.FC = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: password,
+      body: JSON.stringify({ token, newPassword }),
     })
       .then((response) => response.json())
       .then((data) => {
@@ -103,7 +106,7 @@ const ResetPassPage: React.FC = () => {
                 <div key={index} className="flex items-center">
                   <FaCheckCircle
                     className={`${
-                      passwordRegex[index].test(password)
+                      passwordRegex[index].test(newPassword)
                         ? "fill-green-500"
                         : "fill-gray-500"
                     }`}

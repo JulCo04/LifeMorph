@@ -27,7 +27,7 @@ interface Password {
 }
 
 const PasswordManagerPage: React.FC = () => {
-  // Page states: [0: Locked, 1: Unlocked, 2: New PIN needed]
+  // Page states: [-1: Not Logged In, 0: Locked, 1: Unlocked, 2: New PIN needed]
   const [pageState, setPageState] = useState(0);
 
   const [PIN, setPIN] = useState("");
@@ -35,7 +35,7 @@ const PasswordManagerPage: React.FC = () => {
   const [showWarning, setShowWarning] = useState(false);
   const [newPIN, setNewPIN] = useState("");
 
-  const [userId, setUserId] = useState(0);
+  const [userId, setUserId] = useState(-1);
 
   function buildPath(route: string) {
     if (process.env.NODE_ENV === "production") {
@@ -104,7 +104,7 @@ const PasswordManagerPage: React.FC = () => {
 
   const passwordLockPage = () => {
     return (
-      <div className="w-full flex justify-center bg-neutral-100">
+      <div className="w-full h-screen flex justify-center bg-neutral-100">
         <div className="my-auto pb-24 flex flex-col items-center">
           <CiLock className="size-12" />
 
@@ -141,7 +141,7 @@ const PasswordManagerPage: React.FC = () => {
 
   const newPINPage = () => {
     return (
-      <div className="w-full flex justify-center bg-neutral-100">
+      <div className="w-full h-screen flex justify-center bg-neutral-100">
         <div className="my-auto pb-24 flex flex-col items-center">
           <CiLock className="size-12" />
 
@@ -233,7 +233,7 @@ export function PasswordPage({ userId }: PasswordPageProps) {
         setPasswords(data.passwords);
       })
       .catch((error) => console.error("Error fetching passwords:", error));
-  });
+  }, []);
 
   const handleEditPassword = (newPassword: Password) => {
     fetch(buildPath("api/edit-password-obj"), {

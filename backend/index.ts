@@ -80,10 +80,11 @@ async function sendVerificationEmail(email: string, verification_token: string):
   }
 }
 
-// Display all Goals
-app.get('/api/goals', async (req, res) => {
+// Fetch Goals
+app.get('/api/goals/:userId', async (req, res) => {
+  const userId = req.params.userId;
   try {
-      const [rows] = await pool.query('SELECT * FROM goals');
+      const [rows] = await pool.query('SELECT * FROM goals WHERE userId = ?', [userId]);
       res.json(rows);
   }
   catch (error) {
@@ -105,8 +106,8 @@ app.get('/api/users', async (req: Request, res: Response) => {
 
 app.post('/api/goals', async (req, res) => {
   try {
-      const { goalName, category, description, endDate, repetition, dateOfRepetition, goalType, steps, completed } = req.body;
-      const [result] = await pool.query('INSERT INTO goals (goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps]);
+      const { goalName, category, description, endDate, repetition, dateOfRepetition, goalType, steps, completed, userId } = req.body;
+      const [result] = await pool.query('INSERT INTO goals (goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps, userId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps, userId]);
       if (result && 'insertId' in result) {
           const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM goals WHERE id = ?', [result.insertId]);
           if (rows.length > 0) {
@@ -172,46 +173,9 @@ app.post('/api/register', async (req: Request, res: Response) => {
     const { username, email, password } = req.body;
     const verification_token = generateVerificationToken();
 
-    // Validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{12,}$/;
-
-    const warnings = {
-      showUserWarning: false,
-      userWarningMessage: '',
-      showEmailWarning: false,
-      emailWarningMessage: '',
-      showPassWarning: false,
-      passWarningMessage: '',
-    };
-
-    if (username.length > 20) {
-      warnings.showUserWarning = true;
-      warnings.userWarningMessage = "Name can't be over 20 characters";
-    } else if (username === '') {
-      warnings.showUserWarning = true;
-      warnings.userWarningMessage = 'Please provide a username';
-    }
-
-    if (email === '') {
-      warnings.showEmailWarning = true;
-      warnings.emailWarningMessage = 'Please provide an email';
-    } else if (!email.match(emailRegex)) {
-      warnings.showEmailWarning = true;
-      warnings.emailWarningMessage = 'Please provide a valid email';
-    }
-
-    if (password === '') {
-      warnings.showPassWarning = true;
-      warnings.passWarningMessage = 'Please provide a password';
-    } else if (!password.match(passwordRegex)) {
-      warnings.showPassWarning = true;
-      warnings.passWarningMessage = 'Password must be at least 12 characters long, include at least one uppercase letter, one number, and one special character.';
-    }
-
-    if (warnings.showUserWarning || warnings.showEmailWarning || warnings.showPassWarning) {
-      console.log('Validation warnings:', warnings);
-      return res.status(400).json({ warnings });
+    const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM users WHERE email = ?', [email]);
+    if(rows.length > 0) {
+      return res.status(400).json({message: "Email is already in use"});
     }
 
     // Insert user into the database
@@ -1091,11 +1055,11 @@ app.get('/api/contacts/search', async (req: Request, res: Response) => {
 // Add a new password for Password Manager
 app.post('/api/password-obj', async (req: Request, res: Response) => {
   try {
-    const { url, username, password, desc } = req.body;
+    const { url, username, password, desc, userId } = req.body;
 
     const [result] = await pool.query(
-      'INSERT INTO passwords (url, username, password, description) VALUES (?, ?, ?, ?)',
-      [url, username, password, desc]
+      'INSERT INTO passwords (url, username, password, description, userId) VALUES (?, ?, ?, ?, ?)',
+      [url, username, password, desc, userId]
     );
 
     if (result && 'insertId' in result) {
@@ -1113,12 +1077,12 @@ app.post('/api/password-obj', async (req: Request, res: Response) => {
 app.post('/api/get-password-objs', async (req, res) => {
   try {
       const { userId } = req.body; // For future use
-      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM passwords');
+      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM passwords WHERE userId = ?', [userId]);
       if (rows.length > 0) {
         res.status(201).json({message: "Passwords fetched successfully", passwords: rows});
       }
       else {
-        res.status(500).json({error: 'Failed to retrieve passwords' });
+        res.status(201).json({message: 'No passwords created yet', passwords: [] });
       }
   }
   catch (error) {

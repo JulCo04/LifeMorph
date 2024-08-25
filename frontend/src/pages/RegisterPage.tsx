@@ -41,70 +41,13 @@ const RegisterPage: React.FC = () => {
     }
   }
 
-  const handleInputBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+  const handleInputChange = (event: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
 
     setFormData((prevFormData) => ({
       ...prevFormData,
       [name]: value,
     }));
-
-    if (name === "username") {
-      if (value.length > 20) {
-        setWarnings((prevWarnings) => ({
-          ...prevWarnings,
-          showUserWarning: true,
-          userWarningMessage: "Name can't be over 20 characters",
-        }));
-      } else {
-        setWarnings((prevWarnings) => ({
-          ...prevWarnings,
-          showUserWarning: value === "",
-          userWarningMessage: value === "" ? "Please provide a username" : "",
-        }));
-      }
-    } else if (name === "email") {
-      if (value === "") {
-        setWarnings((prevWarnings) => ({
-          ...prevWarnings,
-          showEmailWarning: true,
-          emailWarningMessage: "Please provide an email",
-        }));
-      } else if (!value.match(emailRegex)) {
-        setWarnings((prevWarnings) => ({
-          ...prevWarnings,
-          showEmailWarning: true,
-          emailWarningMessage: "Please provide a valid email",
-        }));
-      } else {
-        setWarnings((prevWarnings) => ({
-          ...prevWarnings,
-          showEmailWarning: false,
-          emailWarningMessage: "",
-        }));
-      }
-    } else if (name === "password") {
-      if (value === "") {
-        setWarnings((prevWarnings) => ({
-          ...prevWarnings,
-          showPassWarning: true,
-          passWarningMessage: "Please provide a password",
-        }));
-      } else if (!value.match(passwordRegex)) {
-        setWarnings((prevWarnings) => ({
-          ...prevWarnings,
-          showPassWarning: true,
-          passWarningMessage:
-            "Password must be at least 12 characters long, include at least one uppercase letter, one number, and one special character.",
-        }));
-      } else {
-        setWarnings((prevWarnings) => ({
-          ...prevWarnings,
-          showPassWarning: false,
-          passWarningMessage: "",
-        }));
-      }
-    }
   };
 
   const handleSignUp = async () => {
@@ -124,12 +67,15 @@ const RegisterPage: React.FC = () => {
         showUserWarning: true,
         userWarningMessage: "Name can't be over 20 characters",
       }));
-    } else {
+      return;
+    }
+    if (username === "") {
       setWarnings((prevWarnings) => ({
         ...prevWarnings,
-        showUserWarning: username === "",
-        userWarningMessage: username === "" ? "Please provide a username" : "",
+        showUserWarning: true,
+        userWarningMessage: "Please provide a username",
       }));
+      return;
     }
 
     if (email === "") {
@@ -138,18 +84,15 @@ const RegisterPage: React.FC = () => {
         showEmailWarning: true,
         emailWarningMessage: "Please provide an email",
       }));
-    } else if (!email.match(emailRegex)) {
+      return;
+    }
+    if (!email.match(emailRegex)) {
       setWarnings((prevWarnings) => ({
         ...prevWarnings,
         showEmailWarning: true,
         emailWarningMessage: "Please provide a valid email",
       }));
-    } else {
-      setWarnings((prevWarnings) => ({
-        ...prevWarnings,
-        showEmailWarning: false,
-        emailWarningMessage: "",
-      }));
+      return;
     }
 
     if (password === "") {
@@ -158,19 +101,16 @@ const RegisterPage: React.FC = () => {
         showPassWarning: true,
         passWarningMessage: "Please provide a password",
       }));
-    } else if (!password.match(passwordRegex)) {
+      return;
+    }
+    if (!password.match(passwordRegex)) {
       setWarnings((prevWarnings) => ({
         ...prevWarnings,
         showPassWarning: true,
         passWarningMessage:
           "Password must be at least 12 characters long, include at least one uppercase letter, one number, and one special character.",
       }));
-    } else {
-      setWarnings((prevWarnings) => ({
-        ...prevWarnings,
-        showPassWarning: false,
-        passWarningMessage: "",
-      }));
+      return;
     }
 
     if (username && email && password) {
@@ -186,7 +126,7 @@ const RegisterPage: React.FC = () => {
           const data = await response.json();
           console.log("User registered successfully:", data);
           setSuccessMsg(true);
-        } else {
+        } else if (response.status === 400) {
           console.error("Failed to register user");
           setWarnings((prevWarnings) => ({
             ...prevWarnings,
@@ -226,7 +166,7 @@ const RegisterPage: React.FC = () => {
         <div className="relative w-full flex justify-center">
           {successMsg && (
             <>
-              <span className="absolute text-green-500 text-sm">
+              <span className="text-green-500 text-center text-sm">
                 Registration successful. Please check your inbox to verify your
                 email.
               </span>
@@ -234,7 +174,7 @@ const RegisterPage: React.FC = () => {
           )}
           {warnings.showGeneralWarning && (
             <>
-              <span className="absolute text-red-500 text-sm">
+              <span className="text-red-500 text-sm">
                 {warnings.generalWarningMessage}
               </span>
             </>
@@ -255,7 +195,7 @@ const RegisterPage: React.FC = () => {
               name="email"
               className={`p-2 rounded w-full outline-none border`}
               placeholder="youremail@address.com"
-              onBlur={handleInputBlur}
+              onChange={handleInputChange}
             />
             {warnings.showEmailWarning && (
               <>
@@ -282,7 +222,7 @@ const RegisterPage: React.FC = () => {
               name="username"
               className={`p-2 rounded w-full outline-none border`}
               placeholder="Username"
-              onBlur={handleInputBlur}
+              onChange={handleInputChange}
             />
             {warnings.showUserWarning && (
               <>
@@ -307,9 +247,11 @@ const RegisterPage: React.FC = () => {
             <input
               type={passwordHide ? "password" : "text"}
               name="password"
-              className={`p-2 rounded w-full outline-none border`}
+              className={`p-2 rounded w-full outline-none border ${
+                warnings.showPassWarning ? "border-red-500" : ""
+              }`}
               placeholder="Password"
-              onBlur={handleInputBlur}
+              onChange={handleInputChange}
             />
             <span
               onClick={() => setPasswordHide(!passwordHide)}
@@ -322,12 +264,9 @@ const RegisterPage: React.FC = () => {
               )}
             </span>
             {warnings.showPassWarning && (
-              <>
-                <span className="text-red-500 text-sm">
-                  {warnings.passWarningMessage}
-                </span>
-                <div className="absolute inset-0 bottom-6 border rounded border-red-500 pointer-events-none"></div>
-              </>
+              <span className="text-red-500 text-sm">
+                {warnings.passWarningMessage}
+              </span>
             )}
           </div>
         </div>

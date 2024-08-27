@@ -200,6 +200,91 @@ app.delete('/api/users/:userId', async (req: Request, res: Response) => {
 });
 
 
+
+
+app.get('/api/todos/:userId', async (req, res) => {
+  try {
+      const userId = req.params.userId;
+      const [rows] = await pool.query('SELECT * FROM todos WHERE userId = ?',[userId]);
+      console.log(rows);
+      res.json(rows);
+  }
+  catch (error) {
+      console.error('Error querying the database:', error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+
+app.post('/api/todos', async (req, res) => {
+  try {
+    const { todo_title, todo_type, due_date, notes = null,userId} = req.body;
+    
+    const [result] = await pool.query('INSERT INTO todos (todo_title, todo_type, due_date, completed, notes,userId) VALUES (?, ?, ?, ?, ?, ?)', [todo_title, todo_type, due_date, 0, notes,userId]);
+    
+    if (result && 'insertId' in result) {
+      const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM todos WHERE id = ?', [result.insertId]);
+      
+      if (rows.length > 0) {
+        res.status(201).json({ message: 'Todo added successfully', todo: rows[0] });
+      } else {
+        res.status(500).json({ error: 'Failed to retrieve the added todo' });
+      }
+    } else {
+      res.status(500).json({ error: 'Failed to add todo' });
+    }
+  } catch (error) {
+    console.error('Error adding user to the database:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/todos/:todoId', async (req: Request, res: Response) => {
+  const todoId = req.params.todoId;
+  try {
+    const [result] = await pool.query('DELETE FROM todos WHERE id = ?', [todoId]);
+    if (result && 'affectedRows' in result && result.affectedRows === 1) {
+      res.json({ message: 'Task deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Task not found' });
+    }
+  } catch (error: any) {
+    console.error('Error removing task from the database:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.put('/api/todos/:todoId', async (req: Request, res: Response) => {
+  const todoId = req.params.todoId;
+  const { todo_title, todo_type, due_date, notes, completed } = req.body;
+
+  console.log('Received data:', req.body); // Log the incoming data
+
+  try {
+    // Check if due_date is valid
+    if (isNaN(new Date(due_date).getTime())) {
+      throw new Error('Invalid date format');
+    }
+
+    const formattedDate = new Date(due_date).toISOString().split('T')[0];
+    console.log('Updating todo with due_date:', formattedDate);
+
+    const [result] = await pool.query(
+      'UPDATE todos SET todo_title = ?, todo_type = ?, due_date = ?, notes = ?, completed = ? WHERE id = ?',
+      [todo_title, todo_type, formattedDate, notes, completed, todoId]
+    );
+
+    if (result && 'affectedRows' in result && result.affectedRows === 1) {
+      res.json({ message: 'Task updated successfully' });
+    } else {
+      res.status(404).json({ error: 'Task not found or no changes made' });
+    }
+  } catch (error: any) {
+    console.error('Error updating task in the database:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).send('Something broke 💩');

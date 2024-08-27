@@ -23,4 +23,27 @@ CREATE TABLE IF NOT EXISTS goals (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
+CREATE TABLE IF NOT EXISTS todos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  todo_title VARCHAR(255) NOT NULL,
+  completed INT NOT NULL,
+  todo_type VARCHAR(50) NOT NULL,
+  due_date DATE NOT NULL ,
+  notes TEXT,
+  userId INT,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
+
+
+
+-- Query to select all tasks
+SELECT * FROM todos;
+
+-- Query to select all users
+SELECT * FROM users;
+
+
 SELECT * FROM goals;

@@ -40,7 +40,7 @@ const GoalTrackingPage: React.FC = () => {
       .catch((error) => console.error("Error fetching users:", error));
   }, []);
 
-  //sorting goals by completion
+  // sorting goals by completion
   goals.forEach((goal) => {
     if (goal.completed === 0) notStarted.push(goal);
     else if (goal.completed === 100) completed.push(goal);
@@ -109,7 +109,7 @@ const GoalTrackingPage: React.FC = () => {
 
   return (
     <div className="flex">
-      <Sidebar />
+      <Sidebar/>
       <div className="w-full">
         <APTitleBar title="Goal Tracker" />
         <div className="mx-5 p-2 sm:px-0">
@@ -153,7 +153,7 @@ const GoalTrackingPage: React.FC = () => {
               <TabPanel>
                 <div className="flex">
                   {goalTabs.map((goalType, index) => (
-                    <div className="w-1/3 mx-2">
+                    <div className="w-1/3 mx-2" key={index}>
                       {goalColumn(goalType, index)}
                     </div>
                   ))}
@@ -169,7 +169,9 @@ const GoalTrackingPage: React.FC = () => {
                         goalName={goal.goalName}
                         category={goal.category}
                         description={goal.description}
-                        endDate={dateFormatter.format(new Date(goal.endDate))}
+                        endDate={dateFormatter.format(
+                          new Date(goal.endDate)
+                        )}
                         repetition={goal.repetition}
                         dateOfRepetition=""
                         goalType={goal.goalType}

@@ -3,16 +3,13 @@ import Sidebar from '../components/Sidebar';
 import APTitleBar from '../components/APTitleBar';
 
 const DashboardPage: React.FC = () => {
-    
     return (
         <div className='flex'>
-            <Sidebar />
+            <Sidebar/>
             <div className='w-full'>
                 <APTitleBar title="Finances"/>
             </div>
-            
         </div>
-        
     );
 };
 

@@ -9,6 +9,6 @@ INSERT INTO goals (goalName, category, description, endDate, repetition, dateOfR
 '[{"name": "Infiltrate government", "done": true}, {"name": "Rise to high position", "done": true}, {"name": "Convert to fascism", "done": true}]'),
 ('Save $100000', 'Finance', '', '2025-01-01', 0, NULL, 2, 60, 
 '{"done": 60000, "target": 100000}'),
-('Run a marathon', 'Health & Fitness', 'Complete a full marathon', '2024-08-01', 0, NULL, 0, 0, '[]');
+('Run a marathon', 'Health & Fitness', 'Complete a full marathon', '2024-08-01', 0, NULL, 0, 0, '{}');
 
 SELECT * FROM goals;

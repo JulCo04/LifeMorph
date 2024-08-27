@@ -584,6 +584,7 @@ const ContactPage: React.FC = () => {
   const [contacts, setContacts] = useState<any[]>([]);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showFormModal, setShowFormModal] = useState(false);
+  const [userId, setUserId] = useState(-1);
   const [newContact, setNewContact] = useState({
     firstName: "",
     lastName: "",
@@ -593,7 +594,7 @@ const ContactPage: React.FC = () => {
     phoneNumber: "",
     notes: "",
     links: "",
-    userId: 2, // Replace with actual user ID
+    userId: -1, // Replace with actual user ID
   });
   const [selectedContact, setSelectedContact] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
@@ -615,12 +616,15 @@ const ContactPage: React.FC = () => {
   }
 
   useEffect(() => {
-    fetchContacts();
-    fetchUpcomingBirthdays();
-  }, []);
+    let userId = -1;
+    const data = localStorage.getItem("user");
+    if (data) {
+      const parsedData = JSON.parse(data);
+      userId = parsedData.user.id;
+      setUserId(parsedData.user.id);
+    }
 
-  const fetchContacts = () => {
-    fetch(buildPath("api/contacts"))
+    fetch(buildPath(`api/contacts/${userId}`))
       .then((response) => {
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -633,10 +637,8 @@ const ContactPage: React.FC = () => {
         updateRelationshipCounts(data);
       })
       .catch((error) => console.error("Error fetching contacts:", error));
-  };
 
-  const fetchUpcomingBirthdays = () => {
-    fetch(buildPath("api/contacts/upcoming-birthdays"))
+    fetch(buildPath(`api/contacts/upcoming-birthdays/${userId}`))
       .then((response) => {
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -650,7 +652,7 @@ const ContactPage: React.FC = () => {
       .catch((error) =>
         console.error("Error fetching upcoming birthdays:", error)
       );
-  };
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -713,7 +715,7 @@ const ContactPage: React.FC = () => {
             phoneNumber: "",
             notes: "",
             links: "",
-            userId: 2,
+            userId: userId,
           });
           setSelectedContact(null);
         } else {
@@ -819,7 +821,7 @@ const ContactPage: React.FC = () => {
                 phoneNumber: "",
                 notes: "",
                 links: "",
-                userId: 2,
+                userId: userId,
               });
               setShowFormModal(true);
             }}

@@ -1003,9 +1003,11 @@ app.post('/api/contacts', async (req: Request, res: Response) => {
 });
 
 // Endpoint to get all contacts
-app.get('/api/contacts', async (req: Request, res: Response) => {
+app.get('/api/contacts/:userId', async (req: Request, res: Response) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM contacts');
+    const userId = req.params.userId;
+    const [rows] = await pool.query('SELECT * FROM contacts WHERE userId = ?', [userId]);
+    console.log(userId);
     res.json(rows);
   } catch (error: any) {
     console.error('Error querying the database:', error.message);
@@ -1014,14 +1016,19 @@ app.get('/api/contacts', async (req: Request, res: Response) => {
 });
 
 // Endpoint to get upcoming birthdays
-app.get('/api/contacts/upcoming-birthdays', async (req: Request, res: Response) => {
+app.get('/api/contacts/upcoming-birthdays/:userId', async (req: Request, res: Response) => {
   try {
+    const userId = req.params.userId;
     const [rows] = await pool.query(`
       SELECT * FROM contacts 
-      WHERE MONTH(birthday) = MONTH(CURDATE()) 
-      AND DAY(birthday) >= DAY(CURDATE())
-      ORDER BY DAY(birthday) ASC
-    `);
+      WHERE userId = ? AND 
+      (
+        (MONTH(birthday) = MONTH(CURDATE()) AND DAY(birthday) >= DAY(CURDATE())) 
+        OR 
+        (MONTH(birthday) = MONTH(CURDATE() + INTERVAL 1 MONTH))
+      )
+      ORDER BY MONTH(birthday) ASC, DAY(birthday) ASC
+    `, [userId]);
     res.json(rows);
   } catch (error: any) {
     console.error('Error querying the database:', error.message);

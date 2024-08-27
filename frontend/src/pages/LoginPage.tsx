@@ -131,7 +131,7 @@ const LoginPage: React.FC = () => {
 
         if (response.ok) {
           if (data.message === "Logged in successfully") {
-            localStorage.setItem("user", JSON.stringify(data.user));
+            localStorage.setItem("user", JSON.stringify(data));
             console.log("User logged in successfully:", data.user);
             navigate("/dashboard");
           } else {

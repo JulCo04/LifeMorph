@@ -803,9 +803,10 @@ app.post('/api/contacts', async (req, res) => {
     }
 });
 // Endpoint to get all contacts
-app.get('/api/contacts', async (req, res) => {
+app.get('/api/contacts/:userId', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM contacts');
+        const userId = req.params.userId;
+        const [rows] = await pool.query('SELECT * FROM contacts WHERE userId = ?', [userId]);
         res.json(rows);
     }
     catch (error) {
@@ -814,14 +815,19 @@ app.get('/api/contacts', async (req, res) => {
     }
 });
 // Endpoint to get upcoming birthdays
-app.get('/api/contacts/upcoming-birthdays', async (req, res) => {
+app.get('/api/contacts/upcoming-birthdays/:userId', async (req, res) => {
     try {
+        const userId = req.params.userId;
         const [rows] = await pool.query(`
       SELECT * FROM contacts 
-      WHERE MONTH(birthday) = MONTH(CURDATE()) 
-      AND DAY(birthday) >= DAY(CURDATE())
-      ORDER BY DAY(birthday) ASC
-    `);
+      WHERE userId = ? AND 
+      (
+        (MONTH(birthday) = MONTH(CURDATE()) AND DAY(birthday) >= DAY(CURDATE())) 
+        OR 
+        (MONTH(birthday) = MONTH(CURDATE() + INTERVAL 1 MONTH))
+      )
+      ORDER BY MONTH(birthday) ASC, DAY(birthday) ASC
+    `, [userId]);
         res.json(rows);
     }
     catch (error) {
@@ -980,6 +986,118 @@ app.post('/api/new-PIN', async (req, res) => {
     }
     catch (error) {
         console.error('Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Changes username for a user
+app.put('/api/change-account-username', async (req, res) => {
+    try {
+        const { userId, username } = req.body;
+        // Check if the username already exists
+        const [rows] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
+        if (rows.length > 0) {
+            return res.status(400).json({ message: 'Username already exists', success: false });
+        }
+        // Update the goal in the database
+        const [result] = await pool.query('UPDATE users SET username = ? WHERE id = ?', [username, userId]);
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Username updated successfully', success: true });
+        }
+        else {
+            res.status(500).json({ message: 'Failed to change username', success: false });
+        }
+    }
+    catch (error) {
+        console.error('Error updating the username in the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Changes email for a user
+app.put('/api/change-account-email', async (req, res) => {
+    try {
+        const { userId, email } = req.body;
+        // Check if the username already exists
+        const [rows] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+        if (rows.length > 0) {
+            return res.status(400).json({ message: 'Email in use', success: false });
+        }
+        // Add email verification here
+        // Update the goal in the database
+        const [result] = await pool.query('UPDATE users SET email = ? WHERE id = ?', [email, userId]);
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Email updated successfully', success: true });
+        }
+        else {
+            res.status(500).json({ message: 'Failed to update email', succuess: false });
+        }
+    }
+    catch (error) {
+        console.error('Error updating the email in the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Changes password for a user
+app.put('/api/change-account-password', async (req, res) => {
+    try {
+        const { userId, password } = req.body;
+        // Update the goal in the database
+        const [result] = await pool.query('UPDATE users SET password = ? WHERE id = ?', [password, userId]);
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Password updated successfully' });
+        }
+        else {
+            res.status(500).json({ error: 'Failed to update password' });
+        }
+    }
+    catch (error) {
+        console.error('Error updating the password in the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Changes PIN for a user
+app.put('/api/change-account-PIN', async (req, res) => {
+    try {
+        const { userId, PIN } = req.body;
+        // Check if user has a PIN
+        const [rows] = await pool.query('SELECT PIN FROM pins WHERE userId = ?', [userId]);
+        if (rows.length < 0) {
+            const [result] = await pool.query('INSERT INTO pins (userId, PIN) VALUES (?, ?)', [userId, PIN]);
+            if (result) {
+                res.status(201).json({ message: 'PIN created' });
+            }
+            else {
+                res.status(500).json({ error: 'Failed to create new PIN' });
+            }
+            return;
+        }
+        // Update the goal in the database
+        const [result] = await pool.query('UPDATE pins SET PIN = ? WHERE userId = ?', [PIN, userId]);
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'PIN updated successfully' });
+        }
+        else {
+            res.status(500).json({ error: 'Failed to update PIN' });
+        }
+    }
+    catch (error) {
+        console.error('Error updating the PIN in the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Deletes a user
+app.delete('/api/delete-account', async (req, res) => {
+    const { userId } = req.body;
+    try {
+        const [result] = await pool.query('DELETE FROM users WHERE id = ?', [userId]);
+        if (result && 'affectedRows' in result && result.affectedRows === 1) {
+            res.json({ message: 'User deleted successfully' });
+        }
+        else {
+            res.status(404).json({ error: 'User not found' });
+        }
+    }
+    catch (error) {
+        console.error('Error deleting User from database:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

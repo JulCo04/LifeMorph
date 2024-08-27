@@ -15,6 +15,7 @@ import APTitleBar from "../components/APTitleBar";
 import { clsx } from "clsx";
 
 const GoalTrackingPage: React.FC = () => {
+  const [userId, setUserId] = useState(-1);
   const [goals, setGoals] = useState<Goal[]>([]);
 
   const TabNames = ["All", "Not Started", "In Progress", "Completed"];
@@ -46,7 +47,17 @@ const GoalTrackingPage: React.FC = () => {
   }
 
   useEffect(() => {
-    fetch(buildPath("api/goals"))
+    const data = localStorage.getItem("user");
+    if (data) {
+      setUserId(JSON.parse(data).user.id);
+    }
+
+    fetch(buildPath(`api/goals/${userId}`), {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
       .then((response) => response.json())
       .then((data) => setGoals(data))
       .catch((error) => console.error("Error fetching users:", error));
@@ -87,7 +98,7 @@ const GoalTrackingPage: React.FC = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(goal),
+      body: JSON.stringify({ ...goal, userId: userId }),
     })
       .then((response) => response.json())
       .then((data) => {

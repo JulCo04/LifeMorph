@@ -34,13 +34,17 @@ const LoginPage: React.FC = () => {
     }
   }
 
-  const handleInputBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+  const handleInputChange = (event: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
 
     setFormData((prevFormData) => ({
       ...prevFormData,
       [name]: value,
     }));
+  };
+
+  const handleInputBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
 
     if (name === "email") {
       if (value === "") {
@@ -205,6 +209,7 @@ const LoginPage: React.FC = () => {
               name="email"
               className={`p-2 rounded w-full outline-none border`}
               placeholder="youremail@address.com"
+              onChange={handleInputChange}
               onBlur={handleInputBlur}
             />
             {warnings.showEmailWarning && (
@@ -232,6 +237,7 @@ const LoginPage: React.FC = () => {
               name="password"
               className={`p-2 rounded w-full outline-none border`}
               placeholder="Password"
+              onChange={handleInputChange}
               onBlur={handleInputBlur}
             />
             <span

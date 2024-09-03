@@ -37,12 +37,12 @@ app.use(cors());
 
 const oauth2Client = new OAuth2(
   "36696501036-kcinmdfdcbk58l1snuo4csko4lu1qnc3.apps.googleusercontent.com",
-  "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", // Client Secret
+  "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", 
   "https://developers.google.com/oauthplayground" // Redirect URL
 );
 
 oauth2Client.setCredentials({
-  refresh_token: "1//04pnKuCPP-E3vCgYIARAAGAQSNwF-L9Iro4WBXP4DEwawbqNI1hbEfz1tLKSbCjK9aJyrF_x44uZ17mnGIkx1bTPFd-oK3IQi_4Y"
+  refresh_token: "1//048esCzC0nXeaCgYIARAAGAQSNwF-L9IreepETA9_eTnAgp7bul236vHA111_3IrEkVUJKUePnc3L74FtpNTbFgb6AD1fvCDx-vY"
 });
 const accessToken = oauth2Client.getAccessToken()
 
@@ -52,7 +52,7 @@ const transporter: Transporter = nodemailer.createTransport({
     type: "OAuth2",
     clientId: "36696501036-kcinmdfdcbk58l1snuo4csko4lu1qnc3.apps.googleusercontent.com",
     clientSecret: "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",
-    refreshToken: "1//04pnKuCPP-E3vCgYIARAAGAQSNwF-L9Iro4WBXP4DEwawbqNI1hbEfz1tLKSbCjK9aJyrF_x44uZ17mnGIkx1bTPFd-oK3IQi_4Y",
+    refreshToken: "1//048esCzC0nXeaCgYIARAAGAQSNwF-L9IreepETA9_eTnAgp7bul236vHA111_3IrEkVUJKUePnc3L74FtpNTbFgb6AD1fvCDx-vY",
     user: 'adulteasemail@gmail.com',
     accessToken: accessToken as any
   },
@@ -971,7 +971,6 @@ app.get('/api/contacts/:userId', async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
     const [rows] = await pool.query('SELECT * FROM contacts WHERE userId = ?', [userId]);
-    console.log(userId);
     res.json(rows);
   } catch (error: any) {
     console.error('Error querying the database:', error.message);

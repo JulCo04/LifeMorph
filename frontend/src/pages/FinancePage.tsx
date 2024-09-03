@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import APTitleBar from '../components/APTitleBar';
 import YearlyTracker from '../components/CashFlowTracker';
@@ -8,6 +8,7 @@ import FinanceVisuals from '../components/FinanceVisuals';
 const FinancePage: React.FC = () => {
     const [selectedTab, setSelectedTab] = useState<'Budget' | 'Cash Flow Tracker' | 'Visuals'>('Cash Flow Tracker');
     const [transitioning, setTransitioning] = useState(false);
+    const [userId, setUserId] = useState<number>();
 
     const handleTabChange = (tab: 'Budget' | 'Cash Flow Tracker' | 'Visuals') => {
         if (selectedTab !== tab) {
@@ -18,6 +19,21 @@ const FinancePage: React.FC = () => {
             }, 200);
         }
     };
+
+    useEffect(() => {
+        
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            try {
+                const user = JSON.parse(userData).user;
+                setUserId(user.id);
+            } catch (error) {
+                console.error('Failed to parse user data:', error);
+            }
+        } else {
+            console.log('No user data found in local storage');
+        }
+    }, []);
 
     return (
         <div className='flex'>
@@ -47,8 +63,8 @@ const FinancePage: React.FC = () => {
                     <div className={`flex flex-col md:flex-row gap-8 min-w-[85vw] md:min-w-[75vw] min-h-[70vh] h-[80vh] bg-green-300 p-4 rounded-tr-lg rounded-bl-lg rounded-br-lg justify-center items-center`}>
                         <div className={`transition-opacity duration-200 ${transitioning ? 'opacity-0' : 'opacity-100'}`}>
                             {/* {selectedTab === 'Visuals' && <FinanceVisuals />} */}
-                            {selectedTab === 'Budget' && <Budget />}
-                            {selectedTab === 'Cash Flow Tracker' && <YearlyTracker />}
+                            {selectedTab === 'Cash Flow Tracker' && userId && <YearlyTracker userId={userId} />}
+                            {selectedTab === 'Budget' && userId && <Budget userId={userId} />}
                         </div>
                     </div>
                 </div>

@@ -3,9 +3,12 @@ import { TiDeleteOutline } from "react-icons/ti";
 import { useState, useEffect } from 'react';
 
 
-const CashFlowTracker: React.FC = () => {
+interface CashFlowTrackerProps {
+    userId: number;
+}
+
+const CashFlowTracker: React.FC<CashFlowTrackerProps> = ({ userId }) => {
     
-    const [userId, setUserId] = useState<number>();
     const [rows, setRows] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [sums, setSums] = useState<any[]>([]);
@@ -53,6 +56,7 @@ const CashFlowTracker: React.FC = () => {
     };
 
     const fetchCategories = async () => {
+        console.log(`Fetching categories: ${userId}`);
         if (userId === null) return;
 
         try {
@@ -306,35 +310,23 @@ const CashFlowTracker: React.FC = () => {
 
     useEffect(() => {
         // Fetch user data from local storage
-        const userData = localStorage.getItem('user');
-        if (userData) {
-            try {
-                const user = JSON.parse(userData);
-                setUserId(user.id);
-            } catch (error) {
-                console.error('Failed to parse user data:', error);
-            }
-        } else {
-            console.log('No user data found in local storage');
-        }
-
-        // Fetch rows and categories if userId is available
         if (userId !== null) {
             fetchRows();
             fetchCategories();
             fetchSums();
         }
-    }, [userId]);
+
+    }, []);
 
 
     return (
         <div>
             <h1 className="text-2xl font-bold mb-2">Cash Flow Tracker</h1>
-                <div className='flex gap-8 rounded-md'>
+            <div className='flex gap-8 rounded-md'>
                 {/* Statistics and Categories Section */}
                 <div className='flex flex-col h-[75vh] rounded-br-md pb-5 gap-4'>
                     {/* Statistics */}
-                    <div className='flex flex-col w-full shadow-md'>
+                    <div className='flex flex-col w-96 shadow-md'>
                         <span className='bg-green-400 text-center font-bold text-lg rounded-t-md'>Metrics</span>
                         <div className='flex flex-col p-5 rounded-b-md bg-slate-100'>
                             <div className='mb-2 text-2xl flex flex-col justify-center items-center text-center'>
@@ -364,7 +356,7 @@ const CashFlowTracker: React.FC = () => {
                     
 
                     {/* Categories */}
-                    <div className='flex flex-col w-full shadow-md overflow-y-auto'>
+                    <div className='flex flex-col w-96 h-96 bg-slate-100 rounded-md shadow-md overflow-y-auto'>
                         <span className='bg-green-400 text-center font-bold text-lg rounded-t-md'>Categories</span>
                         <div className='flex flex-col p-5 rounded-b-md overflow-y-auto bg-slate-100'>
                             {/* <div className='flex items-center justify-center gap-4 my-4'>

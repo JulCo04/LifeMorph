@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
-const Budget: React.FC = () => {
-    const [userId, setUserId] = useState<number | null>(null);
+interface BudgetProps {
+    userId: number;
+}
+
+const Budget: React.FC<BudgetProps> = ({ userId }) => {
     const [incomeTable, setIncomeTable] = useState<any[]>([]);
     const [fixedExpenses, setFixedExpenses] = useState<any[]>([]);
     const [variableExpenses, setVariableExpenses] = useState<any[]>([]);
@@ -199,25 +202,13 @@ const Budget: React.FC = () => {
     };
 
     useEffect(() => {
-        const userData = localStorage.getItem('user');
-        if (userData) {
-            try {
-                const user = JSON.parse(userData);
-                setUserId(user.id);
-            } catch (error) {
-                console.error('Failed to parse user data:', error);
-            }
-        } else {
-            console.log('No user data found in local storage');
-        }
-
         if (userId !== null) {
             fetchIncomeTable();
             fetchFixedExpenses();
             fetchVariableExpenses();
             fetchBudgetSummary();
         }
-    }, [userId]);
+    }, []);
 
     const handleBudgetChange = async (event: React.ChangeEvent<HTMLInputElement>, index: number, type: string) => {
         const value = event.target.value;

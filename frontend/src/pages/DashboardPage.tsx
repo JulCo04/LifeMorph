@@ -20,7 +20,7 @@ const DashboardPage: React.FC = () => {
 
     return (
         <div className='flex'>
-            <Sidebar />
+            <Sidebar/>
             <div className='w-full'>
                 <APTitleBar title="Dashboard" />
                 <div className='p-4 flex justify-center items-center h-5/6'>

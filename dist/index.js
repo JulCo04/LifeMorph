@@ -27,11 +27,10 @@ pool.getConnection()
 });
 app.use(express.json());
 app.use(cors());
-const oauth2Client = new OAuth2("36696501036-kcinmdfdcbk58l1snuo4csko4lu1qnc3.apps.googleusercontent.com", "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", // Client Secret
-"https://developers.google.com/oauthplayground" // Redirect URL
+const oauth2Client = new OAuth2("36696501036-kcinmdfdcbk58l1snuo4csko4lu1qnc3.apps.googleusercontent.com", "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", "https://developers.google.com/oauthplayground" // Redirect URL
 );
 oauth2Client.setCredentials({
-    refresh_token: "1//04pnKuCPP-E3vCgYIARAAGAQSNwF-L9Iro4WBXP4DEwawbqNI1hbEfz1tLKSbCjK9aJyrF_x44uZ17mnGIkx1bTPFd-oK3IQi_4Y"
+    refresh_token: "1//048esCzC0nXeaCgYIARAAGAQSNwF-L9IreepETA9_eTnAgp7bul236vHA111_3IrEkVUJKUePnc3L74FtpNTbFgb6AD1fvCDx-vY"
 });
 const accessToken = oauth2Client.getAccessToken();
 const transporter = nodemailer.createTransport({
@@ -40,7 +39,7 @@ const transporter = nodemailer.createTransport({
         type: "OAuth2",
         clientId: "36696501036-kcinmdfdcbk58l1snuo4csko4lu1qnc3.apps.googleusercontent.com",
         clientSecret: "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",
-        refreshToken: "1//04pnKuCPP-E3vCgYIARAAGAQSNwF-L9Iro4WBXP4DEwawbqNI1hbEfz1tLKSbCjK9aJyrF_x44uZ17mnGIkx1bTPFd-oK3IQi_4Y",
+        refreshToken: "1//048esCzC0nXeaCgYIARAAGAQSNwF-L9IreepETA9_eTnAgp7bul236vHA111_3IrEkVUJKUePnc3L74FtpNTbFgb6AD1fvCDx-vY",
         user: 'adulteasemail@gmail.com',
         accessToken: accessToken
     },
@@ -65,10 +64,11 @@ async function sendVerificationEmail(email, verification_token) {
         console.error('Error sending verification email:', error);
     }
 }
-// Display all Goals
-app.get('/api/goals', async (req, res) => {
+// Fetch Goals
+app.get('/api/goals/:userId', async (req, res) => {
+    const userId = req.params.userId;
     try {
-        const [rows] = await pool.query('SELECT * FROM goals');
+        const [rows] = await pool.query('SELECT * FROM goals WHERE userId = ?', [userId]);
         res.json(rows);
     }
     catch (error) {
@@ -89,8 +89,8 @@ app.get('/api/users', async (req, res) => {
 });
 app.post('/api/goals', async (req, res) => {
     try {
-        const { goalName, category, description, endDate, repetition, dateOfRepetition, goalType, steps, completed } = req.body;
-        const [result] = await pool.query('INSERT INTO goals (goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps]);
+        const { goalName, category, description, endDate, repetition, dateOfRepetition, goalType, steps, completed, userId } = req.body;
+        const [result] = await pool.query('INSERT INTO goals (goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps, userId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [goalName, category, description, endDate, repetition, dateOfRepetition, goalType, completed, steps, userId]);
         if (result && 'insertId' in result) {
             const [rows] = await pool.query('SELECT * FROM goals WHERE id = ?', [result.insertId]);
             if (rows.length > 0) {
@@ -147,44 +147,9 @@ app.post('/api/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
         const verification_token = generateVerificationToken();
-        // Validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{12,}$/;
-        const warnings = {
-            showUserWarning: false,
-            userWarningMessage: '',
-            showEmailWarning: false,
-            emailWarningMessage: '',
-            showPassWarning: false,
-            passWarningMessage: '',
-        };
-        if (username.length > 20) {
-            warnings.showUserWarning = true;
-            warnings.userWarningMessage = "Name can't be over 20 characters";
-        }
-        else if (username === '') {
-            warnings.showUserWarning = true;
-            warnings.userWarningMessage = 'Please provide a username';
-        }
-        if (email === '') {
-            warnings.showEmailWarning = true;
-            warnings.emailWarningMessage = 'Please provide an email';
-        }
-        else if (!email.match(emailRegex)) {
-            warnings.showEmailWarning = true;
-            warnings.emailWarningMessage = 'Please provide a valid email';
-        }
-        if (password === '') {
-            warnings.showPassWarning = true;
-            warnings.passWarningMessage = 'Please provide a password';
-        }
-        else if (!password.match(passwordRegex)) {
-            warnings.showPassWarning = true;
-            warnings.passWarningMessage = 'Password must be at least 12 characters long, include at least one uppercase letter, one number, and one special character.';
-        }
-        if (warnings.showUserWarning || warnings.showEmailWarning || warnings.showPassWarning) {
-            console.log('Validation warnings:', warnings);
-            return res.status(400).json({ warnings });
+        const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (rows.length > 0) {
+            return res.status(400).json({ message: "Email is already in use" });
         }
         // Insert user into the database
         const [result] = await pool.query('INSERT INTO users (username, email, password, verification_token) VALUES (?, ?, ?, ?)', [username, email, password, verification_token]);
@@ -803,9 +768,10 @@ app.post('/api/contacts', async (req, res) => {
     }
 });
 // Endpoint to get all contacts
-app.get('/api/contacts', async (req, res) => {
+app.get('/api/contacts/:userId', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM contacts');
+        const userId = req.params.userId;
+        const [rows] = await pool.query('SELECT * FROM contacts WHERE userId = ?', [userId]);
         res.json(rows);
     }
     catch (error) {
@@ -814,14 +780,19 @@ app.get('/api/contacts', async (req, res) => {
     }
 });
 // Endpoint to get upcoming birthdays
-app.get('/api/contacts/upcoming-birthdays', async (req, res) => {
+app.get('/api/contacts/upcoming-birthdays/:userId', async (req, res) => {
     try {
+        const userId = req.params.userId;
         const [rows] = await pool.query(`
       SELECT * FROM contacts 
-      WHERE MONTH(birthday) = MONTH(CURDATE()) 
-      AND DAY(birthday) >= DAY(CURDATE())
-      ORDER BY DAY(birthday) ASC
-    `);
+      WHERE userId = ? AND 
+      (
+        (MONTH(birthday) = MONTH(CURDATE()) AND DAY(birthday) >= DAY(CURDATE())) 
+        OR 
+        (MONTH(birthday) = MONTH(CURDATE() + INTERVAL 1 MONTH))
+      )
+      ORDER BY MONTH(birthday) ASC, DAY(birthday) ASC
+    `, [userId]);
         res.json(rows);
     }
     catch (error) {
@@ -883,8 +854,8 @@ app.get('/api/contacts/search', async (req, res) => {
 // Add a new password for Password Manager
 app.post('/api/password-obj', async (req, res) => {
     try {
-        const { url, username, password, desc } = req.body;
-        const [result] = await pool.query('INSERT INTO passwords (url, username, password, description) VALUES (?, ?, ?, ?)', [url, username, password, desc]);
+        const { url, username, password, desc, userId } = req.body;
+        const [result] = await pool.query('INSERT INTO passwords (url, username, password, description, userId) VALUES (?, ?, ?, ?, ?)', [url, username, password, desc, userId]);
         if (result && 'insertId' in result) {
             res.status(201).json({ message: 'Password added successfully', passwordId: result.insertId });
         }
@@ -901,12 +872,12 @@ app.post('/api/password-obj', async (req, res) => {
 app.post('/api/get-password-objs', async (req, res) => {
     try {
         const { userId } = req.body; // For future use
-        const [rows] = await pool.query('SELECT * FROM passwords');
+        const [rows] = await pool.query('SELECT * FROM passwords WHERE userId = ?', [userId]);
         if (rows.length > 0) {
             res.status(201).json({ message: "Passwords fetched successfully", passwords: rows });
         }
         else {
-            res.status(500).json({ error: 'Failed to retrieve passwords' });
+            res.status(201).json({ message: 'No passwords created yet', passwords: [] });
         }
     }
     catch (error) {
@@ -980,6 +951,192 @@ app.post('/api/new-PIN', async (req, res) => {
     }
     catch (error) {
         console.error('Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Changes username for a user
+app.put('/api/change-account-username', async (req, res) => {
+    try {
+        const { userId, username } = req.body;
+        // Check if the username already exists
+        const [rows] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
+        if (rows.length > 0) {
+            return res.status(400).json({ message: 'Username already exists', success: false });
+        }
+        // Update the goal in the database
+        const [result] = await pool.query('UPDATE users SET username = ? WHERE id = ?', [username, userId]);
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Username updated successfully', success: true });
+        }
+        else {
+            res.status(500).json({ message: 'Failed to change username', success: false });
+        }
+    }
+    catch (error) {
+        console.error('Error updating the username in the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Changes email for a user
+app.put('/api/change-account-email', async (req, res) => {
+    try {
+        const { userId, email } = req.body;
+        // Check if the username already exists
+        const [rows] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+        if (rows.length > 0) {
+            return res.status(400).json({ message: 'Email in use', success: false });
+        }
+        // Add email verification here
+        // Update the goal in the database
+        const [result] = await pool.query('UPDATE users SET email = ? WHERE id = ?', [email, userId]);
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Email updated successfully', success: true });
+        }
+        else {
+            res.status(500).json({ message: 'Failed to update email', succuess: false });
+        }
+    }
+    catch (error) {
+        console.error('Error updating the email in the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Changes password for a user
+app.put('/api/change-account-password', async (req, res) => {
+    try {
+        const { userId, password } = req.body;
+        // Update the goal in the database
+        const [result] = await pool.query('UPDATE users SET password = ? WHERE id = ?', [password, userId]);
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Password updated successfully' });
+        }
+        else {
+            res.status(500).json({ error: 'Failed to update password' });
+        }
+    }
+    catch (error) {
+        console.error('Error updating the password in the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Changes PIN for a user
+app.put('/api/change-account-PIN', async (req, res) => {
+    try {
+        const { userId, PIN } = req.body;
+        // Check if user has a PIN
+        const [rows] = await pool.query('SELECT PIN FROM pins WHERE userId = ?', [userId]);
+        if (rows.length < 0) {
+            const [result] = await pool.query('INSERT INTO pins (userId, PIN) VALUES (?, ?)', [userId, PIN]);
+            if (result) {
+                res.status(201).json({ message: 'PIN created' });
+            }
+            else {
+                res.status(500).json({ error: 'Failed to create new PIN' });
+            }
+            return;
+        }
+        // Update the goal in the database
+        const [result] = await pool.query('UPDATE pins SET PIN = ? WHERE userId = ?', [PIN, userId]);
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'PIN updated successfully' });
+        }
+        else {
+            res.status(500).json({ error: 'Failed to update PIN' });
+        }
+    }
+    catch (error) {
+        console.error('Error updating the PIN in the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Deletes a user
+app.delete('/api/delete-account', async (req, res) => {
+    const { userId } = req.body;
+    try {
+        const [result] = await pool.query('DELETE FROM users WHERE id = ?', [userId]);
+        if (result && 'affectedRows' in result && result.affectedRows === 1) {
+            res.json({ message: 'User deleted successfully' });
+        }
+        else {
+            res.status(404).json({ error: 'User not found' });
+        }
+    }
+    catch (error) {
+        console.error('Error deleting User from database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+app.get('/api/todos/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const [rows] = await pool.query('SELECT * FROM todos WHERE userId = ?', [userId]);
+        console.log(rows);
+        res.json(rows);
+    }
+    catch (error) {
+        console.error('Error querying the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+app.post('/api/todos', async (req, res) => {
+    try {
+        const { todo_title, todo_type, due_date, notes = null, userId } = req.body;
+        const [result] = await pool.query('INSERT INTO todos (todo_title, todo_type, due_date, completed, notes,userId) VALUES (?, ?, ?, ?, ?, ?)', [todo_title, todo_type, due_date, 0, notes, userId]);
+        if (result && 'insertId' in result) {
+            const [rows] = await pool.query('SELECT * FROM todos WHERE id = ?', [result.insertId]);
+            if (rows.length > 0) {
+                res.status(201).json({ message: 'Todo added successfully', todo: rows[0] });
+            }
+            else {
+                res.status(500).json({ error: 'Failed to retrieve the added todo' });
+            }
+        }
+        else {
+            res.status(500).json({ error: 'Failed to add todo' });
+        }
+    }
+    catch (error) {
+        console.error('Error adding user to the database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+app.delete('/api/todos/:todoId', async (req, res) => {
+    const todoId = req.params.todoId;
+    try {
+        const [result] = await pool.query('DELETE FROM todos WHERE id = ?', [todoId]);
+        if (result && 'affectedRows' in result && result.affectedRows === 1) {
+            res.json({ message: 'Task deleted successfully' });
+        }
+        else {
+            res.status(404).json({ error: 'Task not found' });
+        }
+    }
+    catch (error) {
+        console.error('Error removing task from the database:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+app.put('/api/todos/:todoId', async (req, res) => {
+    const todoId = req.params.todoId;
+    const { todo_title, todo_type, due_date, notes, completed } = req.body;
+    console.log('Received data:', req.body); // Log the incoming data
+    try {
+        // Check if due_date is valid
+        if (isNaN(new Date(due_date).getTime())) {
+            throw new Error('Invalid date format');
+        }
+        const formattedDate = new Date(due_date).toISOString().split('T')[0];
+        console.log('Updating todo with due_date:', formattedDate);
+        const [result] = await pool.query('UPDATE todos SET todo_title = ?, todo_type = ?, due_date = ?, notes = ?, completed = ? WHERE id = ?', [todo_title, todo_type, formattedDate, notes, completed, todoId]);
+        if (result && 'affectedRows' in result && result.affectedRows === 1) {
+            res.json({ message: 'Task updated successfully' });
+        }
+        else {
+            res.status(404).json({ error: 'Task not found or no changes made' });
+        }
+    }
+    catch (error) {
+        console.error('Error updating task in the database:', error.message);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

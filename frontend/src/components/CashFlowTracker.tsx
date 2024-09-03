@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 
 const CashFlowTracker: React.FC = () => {
     
-    const [userId, setUserId] = useState<number | null>(null);
+    const [userId, setUserId] = useState<number>();
     const [rows, setRows] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [sums, setSums] = useState<any[]>([]);
@@ -310,7 +310,7 @@ const CashFlowTracker: React.FC = () => {
         if (userData) {
             try {
                 const user = JSON.parse(userData);
-                setUserId(user.user.id);
+                setUserId(user.id);
             } catch (error) {
                 console.error('Failed to parse user data:', error);
             }

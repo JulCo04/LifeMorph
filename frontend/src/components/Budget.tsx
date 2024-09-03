@@ -203,7 +203,7 @@ const Budget: React.FC = () => {
         if (userData) {
             try {
                 const user = JSON.parse(userData);
-                setUserId(user.user.id);
+                setUserId(user.id);
             } catch (error) {
                 console.error('Failed to parse user data:', error);
             }

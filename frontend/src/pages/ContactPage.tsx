@@ -579,6 +579,7 @@ export default ContactPage;*/
 
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
+import APTitleBar from "../components/APTitleBar";
 
 const ContactPage: React.FC = () => {
   const [contacts, setContacts] = useState<any[]>([]);
@@ -804,8 +805,8 @@ const ContactPage: React.FC = () => {
     <div className="flex min-h-screen bg-gray-100">
       <Sidebar />
       <div className="flex-1 flex flex-col p-4">
+        <APTitleBar title="Contact Manager" />
         <header className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold">Contact Manager</h1>
           <button
             className="bg-green-500 text-white p-2 rounded"
             onClick={() => {

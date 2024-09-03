@@ -46,9 +46,9 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="flex">
+    <div className={`fixed ${open ? "w-56" : "w-20"} flex`}>
       <div
-        className={`bg-slate-300 h-screen p-5 pt-8 ${open ? "w-56" : "w-20"} 
+        className={` bg-slate-300 h-screen p-5 pt-8  
             relative
             duration-300`}
       >

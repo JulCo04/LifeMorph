@@ -12,14 +12,16 @@ interface LocationState {
 }
 
 const RegisterPage: React.FC = () => {
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-  });
 
   const location = useLocation();
-  const { email } = location.state as LocationState;
+  const state = location.state as LocationState;
+  const initialEmail = state?.email || '';
+
+  const [formData, setFormData] = useState({
+      username: "",
+      email: initialEmail,
+      password: "",
+    });
 
   const [warnings, setWarnings] = useState({
     userWarningMessage: "",
@@ -166,7 +168,7 @@ const RegisterPage: React.FC = () => {
       <div className="mt-8 w-[450px] flex flex-col bg-white py-10 px-16 rounded-lg border shadow-md">
         <div className="relative text-center">
           <span className="font-semibold text-xl text-center">
-            Create LifeMorph Account
+            Create AdultEase Account
           </span>
         </div>
 
@@ -227,7 +229,7 @@ const RegisterPage: React.FC = () => {
             <input
               type="text"
               name="email"
-              defaultValue={email}
+              defaultValue={initialEmail}
               className={`p-2 rounded w-full outline-none border`}
               placeholder="youremail@address.com"
               onChange={handleInputChange}
@@ -298,10 +300,10 @@ const RegisterPage: React.FC = () => {
           Sign Up
         </button>
 
-        <span className="mt-6 self-center text-gray-500">or</span>
+        {/* <span className="mt-6 self-center text-gray-500">or</span> */}
 
         {/* Sign up with Google */}
-        <div
+        {/* <div
           onClick={handleSignUpWithGoogle}
           className="mt-6 mb-4 flex items-center justify-center px-12 py-2 rounded cursor-pointer border border-blue-500 hover:bg-gray-100"
         >
@@ -309,7 +311,7 @@ const RegisterPage: React.FC = () => {
           <span className="ml-2 text-blue-500 font-semibold">
             Sign up with Google
           </span>
-        </div>
+        </div> */}
 
         <div className="mt-4 self-center text-center text-sm text-gray-500 text-wrap">
           By creating an account, you agree to our

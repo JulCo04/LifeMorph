@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import {
   Select,
   Tab,
@@ -13,6 +14,7 @@ import AddGoalButton from "../components/AddGoalButton";
 import Sidebar from "../components/Sidebar";
 import APTitleBar from "../components/APTitleBar";
 import { clsx } from "clsx";
+import { useNavigate } from 'react-router-dom';
 
 const GoalTrackingPage: React.FC = () => {
   const [userId, setUserId] = useState(-1);
@@ -46,22 +48,38 @@ const GoalTrackingPage: React.FC = () => {
     }
   }
 
+
+  const fetchGoals = async (userId: number) => {
+    try {
+      console.log("fetching...");
+      const response = await fetch(buildPath(`api/goals/${userId}`), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      setGoals(data);
+    } catch (error) {
+      console.error("Error fetching goals:", error);
+    }
+  };
+
+  const navigate = useNavigate();
+
   useEffect(() => {
     const data = localStorage.getItem("user");
     if (data) {
-      setUserId(JSON.parse(data).user.id);
+      const userId = JSON.parse(data).user.id;
+      setUserId(userId);
+      fetchGoals(userId);
+    } else {
+      navigate('/');
     }
-
-    fetch(buildPath(`api/goals/${userId}`), {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => setGoals(data))
-      .catch((error) => console.error("Error fetching users:", error));
   }, []);
+  
+  
+  
 
   const compareFn = (firstGoal: Goal, secondGoal: Goal) => {
     if (firstGoal.completed === 100) return 1;

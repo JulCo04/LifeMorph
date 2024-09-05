@@ -85,6 +85,8 @@ const SettingsPage: React.FC = () => {
     if (data) {
       setLocal(JSON.parse(data));
       setUserData(JSON.parse(data).user);
+    } else {
+      navigate('/');
     }
   }, []);
 
@@ -678,8 +680,8 @@ const SettingsPage: React.FC = () => {
                       onClick={() => setSelectedTab(index)}
                       className={`${
                         selectedTab === index
-                          ? "bg-gray-300"
-                          : "hover:bg-gray-200"
+                          ? "bg-green-300"
+                          : "hover:bg-green-200"
                       } pl-4 pr-16 py-1 flex items-center gap-x-3 text-lg rounded-lg transition cursor-pointer`}
                     >
                       <span>{tab.icon}</span>

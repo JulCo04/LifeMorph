@@ -25,9 +25,9 @@ const APTitleBar: React.FC<APTitleBarProps> = ({ title }) => {
         <div className='p-7'>
             <div className='flex items-center'>
                 <h1 className='text-2xl font-semibold'>{title}</h1>
-                <div className='ml-auto self-end'>
+                {/* <div className='ml-auto self-end'>
                     <BsThreeDots className='cursor-pointer' onClick={handleDropdownToggle} />
-                </div>
+                </div> */}
             </div>
             
             <hr className='mt-1' />

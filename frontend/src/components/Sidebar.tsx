@@ -21,14 +21,14 @@ const Sidebar: React.FC = () => {
 
   const Menus = [
     { title: "Dashboard", path: "/dashboard" },
-    { title: "Inbox", icon: <FiInbox /> },
+    // { title: "Inbox", icon: <FiInbox /> },
     {
       title: "Finances",
       spacing: true,
       icon: <FaMoneyBillTrendUp />,
       path: "/finance",
     },
-    { title: "To-do List", icon: <VscChecklist />, path: "/todo-list" },
+    { title: "Lists", icon: <VscChecklist />, path: "/todo-list" },
     {
       title: "Contact Manager",
       icon: <RiContactsBook2Fill />,
@@ -59,14 +59,14 @@ const Sidebar: React.FC = () => {
       <div className={`mr-8 duration-300 ${open ? "w-56" : "w-20"}`} />
       <div className="fixed left-0 flex">
         <div
-          className={`bg-slate-300 h-screen p-5 pt-8 ${open ? "w-56" : "w-20"}
+          className={`bg-green-300 h-screen p-5 pt-8 ${open ? "w-56" : "w-20"}
               relative
               duration-300`}
         >
           <RiArrowLeftSLine
             className={`
                   ${!open && "rotate-180"}
-                  bg-slate-500 text-3xl rounded-full text-white
+                  bg-green-500 text-3xl rounded-full text-white
                   absolute -right-4
                   cursor-pointer`}
             onClick={() => setOpen(!open)}
@@ -82,10 +82,10 @@ const Sidebar: React.FC = () => {
               ></PiButterflyDuotone>
               {/* Text Next to Logo */}
               <h1
-                className={`text-white origin-left font-medium text-2xl
+                className={`text-slate-700 origin-left font-medium text-2xl
                           ml-2 duration-300 ${!open && "hidden"}`}
               >
-                AdultEase
+                LifeMorph
               </h1>
             </div>
           </Link>
@@ -97,11 +97,11 @@ const Sidebar: React.FC = () => {
                 onClick={menu.title === "Logout" ? handleLogout : undefined}
               >
                 {/* Line in between each spacing */}
-                {menu.spacing && <hr className="my-4 border-slate-400 mt-9" />}
+                {menu.spacing && <hr className="my-4 border-slate-600 mt-9" />}
                 <li
                   key={index}
-                  className={`text-slate-600 text-sm flex
-                              items-center gap-x-4 cursor-pointer p-2 hover:bg-slate-400
+                  className={`text-slate-700 text-sm flex
+                              items-center gap-x-4 cursor-pointer p-2 hover:bg-green-400
                               hover:text-slate-800 rounded-md
                               mt-2 ${menu.spacing ? "mt-9" : "mt-2"}`}
                 >

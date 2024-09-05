@@ -6,6 +6,10 @@ import TodoBox, { Todo } from "../components/TodoBox";
 import { clsx } from "clsx";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { FaCheck } from "react-icons/fa6";
+import { FaDeleteLeft } from "react-icons/fa6";
+import { MdCancelPresentation } from "react-icons/md";
+import { useNavigate } from 'react-router-dom';
 
 const TodoListPage: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -108,12 +112,16 @@ const TodoListPage: React.FC = () => {
       .catch((error) => console.error("Error updating todo completion:", error));
   };
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const data = localStorage.getItem("user");
     let userID = -1;
     if (data) {
       userID = JSON.parse(data).user.id;
       setUserId(userID);
+    } else {
+      navigate('/');
     }
     fetch(buildPath(`api/todos/${userID}`))
       .then((response) => response.json())
@@ -246,7 +254,7 @@ const TodoListPage: React.FC = () => {
       </td>
       <td className="px-4 py-2 text-center">
         <button onClick={() => handleDeleteTodo(todo.id)}>
-        <span className="text-red-500 hover:text-red-700">&times;</span>
+        <span className="text-red-500 hover:text-red-700"><FaDeleteLeft /></span>
         </button>
       </td>
     </tr>
@@ -298,148 +306,150 @@ const TodoListPage: React.FC = () => {
   return (
     <div className="flex">
       <Sidebar />
-      <div className="w-full p-5">
+      <div className="w-full">
         <APTitleBar title="To-do List" />
-        <TabGroup>
-          <TabList className="flex space-x-4 border-b">
-            <Tab className={({ selected }) => clsx("px-4 py-2", selected ? "border-b-2 border-black" : "text-gray-500")}>
-              All
-            </Tab>
-            <Tab className={({ selected }) => clsx("px-4 py-2", selected ? "border-b-2 border-black" : "text-gray-500")}>
-              Today
-            </Tab>
-            <Tab className={({ selected }) => clsx("px-4 py-2", selected ? "border-b-2 border-black" : "text-gray-500")}>
-              Upcoming
-            </Tab>
-            <Tab className={({ selected }) => clsx("px-4 py-2", selected ? "border-b-2 border-black" : "text-gray-500")}>
-              Completed
-            </Tab>
-          </TabList>
-          <TabPanels className="mt-5">
-            <TabPanel>
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="px-4 py-2 text-left">Status</th>
-                    <th className="px-4 py-2 text-left">Name</th>
-                    <th className="px-4 py-2 text-left">Type</th>
-                    <th className="px-4 py-2 text-left">Date</th>
-                    <th className="px-4 py-2 text-left">Notes</th>
-                    <th className="px-4 py-2 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {all.map(todoRow)}
-                  {newTodo && (
-                    <tr className="border-t">
-                      <td className="px-4 py-2 text-center">
-                        <input 
-                          type="checkbox" 
-                          checked={newTodo.completed === 100} 
-                          onChange={() => setNewTodo({ ...newTodo, completed: newTodo.completed === 100 ? 0 : 100 })} 
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <input 
-                          type="text" 
-                          value={newTodo.todo_title} 
-                          onChange={(e) => setNewTodo({ ...newTodo, todo_title: e.target.value })} 
-                          className="w-full"
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <input 
-                          type="text" 
-                          value={newTodo.todo_type} 
-                          onChange={(e) => setNewTodo({ ...newTodo, todo_type: e.target.value })} 
-                          className="w-full"
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <DatePicker
-                          selected={new Date(newTodo.due_date)}
-                          onChange={(date) => setNewTodo({ ...newTodo, due_date: date ? date.toISOString().split('T')[0] : newTodo.due_date })}
-                          dateFormat="MM/dd/yyyy"
-                          className="w-full"
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <input 
-                          type="text" 
-                          value={newTodo.notes} 
-                          onChange={(e) => setNewTodo({ ...newTodo, notes: e.target.value })} 
-                          className="w-full"
-                        />
-                      </td>
-                      <td className="px-4 py-2 text-center">
-                        <button onClick={saveNewTodo} className="text-green-500 hover:text-green-700">
-                          &#10003;
-                        </button>
-                        <button onClick={cancelNewTodo} className="text-red-500 hover:text-red-700 ml-2">
-                          &#10060; {/* Cancel icon */}
-                        </button>
-                      </td>
+        <div className='p-5'>
+          <TabGroup>
+            <TabList className="flex space-x-4 border-b">
+              <Tab className={({ selected }) => clsx("px-4 py-2", selected ? "border-b-2 border-black" : "text-gray-500")}>
+                All
+              </Tab>
+              <Tab className={({ selected }) => clsx("px-4 py-2", selected ? "border-b-2 border-black" : "text-gray-500")}>
+                Today
+              </Tab>
+              <Tab className={({ selected }) => clsx("px-4 py-2", selected ? "border-b-2 border-black" : "text-gray-500")}>
+                Upcoming
+              </Tab>
+              <Tab className={({ selected }) => clsx("px-4 py-2", selected ? "border-b-2 border-black" : "text-gray-500")}>
+                Completed
+              </Tab>
+            </TabList>
+            <TabPanels className="mt-5">
+              <TabPanel>
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-green-300">
+                      <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-left">Name</th>
+                      <th className="px-4 py-2 text-left">Type</th>
+                      <th className="px-4 py-2 text-left">Date</th>
+                      <th className="px-4 py-2 text-left">Notes</th>
+                      <th className="px-4 py-2 text-left">Actions</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-              <button onClick={addNewTodoRow} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">
-                + Add New Todo
-              </button>
-            </TabPanel>
-            <TabPanel>
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="px-4 py-2 text-left">Status</th>
-                    <th className="px-4 py-2 text-left">Name</th>
-                    <th className="px-4 py-2 text-left">Type</th>
-                    <th className="px-4 py-2 text-left">Date</th>
-                    <th className="px-4 py-2 text-left">Notes</th>
-                    <th className="px-4 py-2 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {today.map(todoRow)}
-                </tbody>
-              </table>
-            </TabPanel>
-            <TabPanel>
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="px-4 py-2 text-left">Status</th>
-                    <th className="px-4 py-2 text-left">Name</th>
-                    <th className="px-4 py-2 text-left">Type</th>
-                    <th className="px-4 py-2 text-left">Date</th>
-                    <th className="px-4 py-2 text-left">Notes</th>
-                    <th className="px-4 py-2 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {upcoming.map(todoRow)}
-                </tbody>
-              </table>
-            </TabPanel>
-            <TabPanel>
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="px-4 py-2 text-left">Status</th>
-                    <th className="px-4 py-2 text-left">Name</th>
-                    <th className="px-4 py-2 text-left">Type</th>
-                    <th className="px-4 py-2 text-left">Date</th>
-                    <th className="px-4 py-2 text-left">Notes</th>
-                    <th className="px-4 py-2 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {completed.map(todoRow)}
-                </tbody>
-              </table>
-            </TabPanel>
-          </TabPanels>
-        </TabGroup>
+                  </thead>
+                  <tbody>
+                    {all.map(todoRow)}
+                    {newTodo && (
+                      <tr className="border-t">
+                        <td className="px-4 py-2 text-center">
+                          <input 
+                            type="checkbox" 
+                            checked={newTodo.completed === 100} 
+                            onChange={() => setNewTodo({ ...newTodo, completed: newTodo.completed === 100 ? 0 : 100 })} 
+                          />
+                        </td>
+                        <td className="px-4 py-2">
+                          <input 
+                            type="text" 
+                            value={newTodo.todo_title} 
+                            onChange={(e) => setNewTodo({ ...newTodo, todo_title: e.target.value })} 
+                            className="w-full"
+                          />
+                        </td>
+                        <td className="px-4 py-2">
+                          <input 
+                            type="text" 
+                            value={newTodo.todo_type} 
+                            onChange={(e) => setNewTodo({ ...newTodo, todo_type: e.target.value })} 
+                            className="w-full"
+                          />
+                        </td>
+                        <td className="px-4 py-2">
+                          <DatePicker
+                            selected={new Date(newTodo.due_date)}
+                            onChange={(date) => setNewTodo({ ...newTodo, due_date: date ? date.toISOString().split('T')[0] : newTodo.due_date })}
+                            dateFormat="MM/dd/yyyy"
+                            className="w-full"
+                          />
+                        </td>
+                        <td className="px-4 py-2">
+                          <input 
+                            type="text" 
+                            value={newTodo.notes} 
+                            onChange={(e) => setNewTodo({ ...newTodo, notes: e.target.value })} 
+                            className="w-full"
+                          />
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          <button onClick={saveNewTodo} className="text-xl text-green-500 hover:text-green-700">
+                            <FaCheck />
+                          </button>
+                          <button onClick={cancelNewTodo} className="text-xl text-red-500 hover:text-red-700 ml-2">
+                            <MdCancelPresentation />
+                          </button>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+                <button onClick={addNewTodoRow} className="mt-4 px-4 py-2 bg-green-400 text-white rounded hover:bg-green-500">
+                  + Add New Todo
+                </button>
+              </TabPanel>
+              <TabPanel>
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-green-300">
+                      <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-left">Name</th>
+                      <th className="px-4 py-2 text-left">Type</th>
+                      <th className="px-4 py-2 text-left">Date</th>
+                      <th className="px-4 py-2 text-left">Notes</th>
+                      <th className="px-4 py-2 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {today.map(todoRow)}
+                  </tbody>
+                </table>
+              </TabPanel>
+              <TabPanel>
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-green-300">
+                      <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-left">Name</th>
+                      <th className="px-4 py-2 text-left">Type</th>
+                      <th className="px-4 py-2 text-left">Date</th>
+                      <th className="px-4 py-2 text-left">Notes</th>
+                      <th className="px-4 py-2 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {upcoming.map(todoRow)}
+                  </tbody>
+                </table>
+              </TabPanel>
+              <TabPanel>
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-green-300">
+                      <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-left">Name</th>
+                      <th className="px-4 py-2 text-left">Type</th>
+                      <th className="px-4 py-2 text-left">Date</th>
+                      <th className="px-4 py-2 text-left">Notes</th>
+                      <th className="px-4 py-2 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {completed.map(todoRow)}
+                  </tbody>
+                </table>
+              </TabPanel>
+            </TabPanels>
+          </TabGroup>
+        </div>
       </div>
     </div>
   );

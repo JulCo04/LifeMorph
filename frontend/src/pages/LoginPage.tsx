@@ -4,7 +4,7 @@ import { FaCheck } from "react-icons/fa6";
 import { FcGoogle } from "react-icons/fc";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { PiButterflyDuotone } from "react-icons/pi";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -75,6 +75,12 @@ const LoginPage: React.FC = () => {
         }));
       }
     }
+  };
+
+
+  const email =  '';
+  const handleCreateAccountClick = () => {
+    navigate('/register', { state: {email} });
   };
 
   const handleContinueWithGoogle = () => {};
@@ -181,7 +187,7 @@ const LoginPage: React.FC = () => {
       <div className="mt-8 w-[450px] flex flex-col bg-white py-10 px-16 rounded-lg border shadow-md">
         <div className="relative text-center">
           <span className="font-semibold text-xl text-center">
-            Login to AdultEase
+            Login to LifeMorph
           </span>
         </div>
 
@@ -288,10 +294,10 @@ const LoginPage: React.FC = () => {
           Login
         </button>
 
-        <span className="mt-6 self-center text-gray-500">or</span>
+        {/* <span className="mt-6 self-center text-gray-500">or</span> */}
 
         {/* Sign up with Google */}
-        <div
+        {/* <div
           onClick={handleContinueWithGoogle}
           className="mt-6 mb-4 flex items-center justify-center px-12 py-2 rounded cursor-pointer border border-blue-500 hover:bg-gray-100"
         >
@@ -299,16 +305,17 @@ const LoginPage: React.FC = () => {
           <span className="ml-2 text-blue-500 font-semibold">
             Continue with Google
           </span>
-        </div>
+        </div> */}
       </div>
 
       <div className="mt-6 flex items-center text-sm">
         New to AdultEase?
-        <Link to={"/register"}>
-          <span className="ml-2 font-semibold text-blue-500 hover:underline">
-            Create free account
-          </span>
-        </Link>
+        <span
+          onClick={handleCreateAccountClick}
+          className="ml-2 font-semibold text-blue-500 hover:underline cursor-pointer"
+        >
+          Create free account
+        </span>
       </div>
     </div>
   );

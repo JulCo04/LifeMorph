@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { PiButterflyDuotone } from "react-icons/pi";
@@ -7,12 +7,19 @@ import { FcGoogle } from "react-icons/fc";
 import { Checkbox, Field, Label } from "@headlessui/react";
 import { FaCheck } from "react-icons/fa6";
 
+interface LocationState {
+  email?: string;
+}
+
 const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
   });
+
+  const location = useLocation();
+  const { email } = location.state as LocationState;
 
   const [warnings, setWarnings] = useState({
     userWarningMessage: "",
@@ -159,7 +166,7 @@ const RegisterPage: React.FC = () => {
       <div className="mt-8 w-[450px] flex flex-col bg-white py-10 px-16 rounded-lg border shadow-md">
         <div className="relative text-center">
           <span className="font-semibold text-xl text-center">
-            Create AdultEase Account
+            Create LifeMorph Account
           </span>
         </div>
 
@@ -179,33 +186,6 @@ const RegisterPage: React.FC = () => {
               </span>
             </>
           )}
-        </div>
-
-        {/* Email */}
-        <div className="mt-6">
-          <span className="font-semibold text-gray-500">
-            Email
-            {warnings.showEmailWarning && (
-              <span className="text-red-500">*</span>
-            )}
-          </span>
-          <div className="relative">
-            <input
-              type="text"
-              name="email"
-              className={`p-2 rounded w-full outline-none border`}
-              placeholder="youremail@address.com"
-              onChange={handleInputChange}
-            />
-            {warnings.showEmailWarning && (
-              <>
-                <span className="text-red-500 text-sm">
-                  {warnings.emailWarningMessage}
-                </span>
-                <div className="absolute inset-0 bottom-6 border rounded border-red-500 pointer-events-none"></div>
-              </>
-            )}
-          </div>
         </div>
 
         {/* Username */}
@@ -228,6 +208,34 @@ const RegisterPage: React.FC = () => {
               <>
                 <span className="text-red-500 text-sm">
                   {warnings.userWarningMessage}
+                </span>
+                <div className="absolute inset-0 bottom-6 border rounded border-red-500 pointer-events-none"></div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Email */}
+        <div className="mt-6">
+          <span className="font-semibold text-gray-500">
+            Email
+            {warnings.showEmailWarning && (
+              <span className="text-red-500">*</span>
+            )}
+          </span>
+          <div className="relative">
+            <input
+              type="text"
+              name="email"
+              defaultValue={email}
+              className={`p-2 rounded w-full outline-none border`}
+              placeholder="youremail@address.com"
+              onChange={handleInputChange}
+            />
+            {warnings.showEmailWarning && (
+              <>
+                <span className="text-red-500 text-sm">
+                  {warnings.emailWarningMessage}
                 </span>
                 <div className="absolute inset-0 bottom-6 border rounded border-red-500 pointer-events-none"></div>
               </>

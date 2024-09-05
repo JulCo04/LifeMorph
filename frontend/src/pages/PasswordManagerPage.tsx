@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
 import APTitleBar from "../components/APTitleBar";
-
+import { useNavigate } from 'react-router-dom';
 import { CiLock } from "react-icons/ci";
 import { BsArrowRight, BsThreeDotsVertical } from "react-icons/bs";
 import { VscGlobe } from "react-icons/vsc";
@@ -45,6 +45,8 @@ const PasswordManagerPage: React.FC = () => {
     }
   }
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const user = localStorage.getItem("user");
     let id = -1;
@@ -54,6 +56,7 @@ const PasswordManagerPage: React.FC = () => {
       setUserId(id);
     } else {
       setPageState(-1);
+      navigate('/');
       return;
     }
 
@@ -125,7 +128,7 @@ const PasswordManagerPage: React.FC = () => {
               />
               <BsArrowRight
                 onClick={handleEnterPIN}
-                className="absolute size-5 fill-gray-500 right-3 top-2.5 cursor-pointer transition hover:translate-x-0.5"
+                className="absolute size-5 fill-gray-500 right-3 top-2.5 cursor-pointer transition hover:trangreen-x-0.5"
               />
               {showWarning && (
                 <div className="absolute pt-1 left-1 text-red-500 font-sm">
@@ -141,7 +144,7 @@ const PasswordManagerPage: React.FC = () => {
 
   const newPINPage = () => {
     return (
-      <div className="w-full h-screen flex justify-center bg-neutral-100">
+      <div className="w-full h-screen flex justify-center">
         <div className="my-auto pb-24 flex flex-col items-center">
           <CiLock className="size-12" />
 
@@ -158,12 +161,12 @@ const PasswordManagerPage: React.FC = () => {
                 type="text"
                 name="pin"
                 placeholder="Enter New PIN"
-                className="w-80 max-w-80 border-0 shadow text-gray-600 placeholder:text-gray-400 focus:ring-0"
+                className="w-80 max-w-80 border-0 shadow bg-slate-50 text-gray-600 placeholder:text-gray-400 focus:ring-0"
                 onBlur={handleChangeNewPIN}
               />
               <BsArrowRight
                 onClick={handleNewPIN}
-                className="absolute size-5 fill-gray-500 right-3 top-2.5 cursor-pointer transition hover:translate-x-0.5"
+                className="absolute size-5 fill-gray-500 right-3 top-2.5 cursor-pointer transition hover:trangreen-x-0.5"
               />
             </div>
           </div>
@@ -208,6 +211,7 @@ export function PasswordPage({ userId }: PasswordPageProps) {
     username: "",
     password: "",
     desc: "",
+    userId: userId
   });
   const [isEdited, setIsEdited] = useState(false);
   const [warnings, setWarnings] = useState({ url: false, password: false });
@@ -298,6 +302,8 @@ export function PasswordPage({ userId }: PasswordPageProps) {
       return;
     }
 
+    console.log(newPassword);
+
     fetch(buildPath("api/password-obj"), {
       method: "POST",
       headers: {
@@ -320,6 +326,7 @@ export function PasswordPage({ userId }: PasswordPageProps) {
       username: "",
       password: "",
       desc: "",
+      userId: userId
     });
     setIsEdited(false);
     setWarnings({ url: false, password: false });
@@ -349,7 +356,7 @@ export function PasswordPage({ userId }: PasswordPageProps) {
               <div>
                 <button
                   onClick={() => setOpenAddMenu(true)}
-                  className="px-4 py-1 text-gray-700 border-2 border-blue-400 rounded-full hover:bg-gray-200"
+                  className="px-4 py-1 text-gray-700 border-2 border-green-600 rounded-full hover:bg-green-200"
                 >
                   Add
                 </button>
@@ -385,7 +392,7 @@ export function PasswordPage({ userId }: PasswordPageProps) {
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <DialogPanel
               transition
-              className="relative w-1/2 max-w-xl transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95"
+              className="relative w-1/2 max-w-xl transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-[closed]:trangreen-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in data-[closed]:sm:trangreen-y-0 data-[closed]:sm:scale-95"
             >
               <div className="px-8 pb-4 pt-6 bg-white">
                 <div className="text-lg">Add a password</div>
@@ -551,7 +558,7 @@ export function PasswordRow({
     <>
       <div
         onClick={() => setOpenModal(true)}
-        className="py-4 border-b grid grid-cols-[1fr_1fr_1fr_80px] hover:bg-gray-100"
+        className="py-4 border-b grid grid-cols-[1fr_1fr_1fr_80px] hover:bg-green-100"
       >
         <div className="flex items-center gap-x-3 text-ellipsis">
           {password.url.includes(".") ? (
@@ -599,14 +606,14 @@ export function PasswordRow({
               <MenuItems
                 transition
                 anchor="bottom end"
-                className="w-40 origin-top-right rounded-xl border border-black/5 bg-slate-200 p-1 text-sm/6 text-neutral-600 transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
+                className="w-40 origin-top-right rounded-xl border border-black/5 bg-green-200 p-1 text-sm/6 text-neutral-600 transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
               >
                 <MenuItem>
                   <button
                     onClick={() => setOpenModal(true)}
                     className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-black/10"
                   >
-                    <FaPencil className="size-4 fill-slate-700" />
+                    <FaPencil className="size-4 fill-green-700" />
                     Edit
                   </button>
                 </MenuItem>
@@ -615,7 +622,7 @@ export function PasswordRow({
                     onClick={() => handleDeletePassword(password.id)}
                     className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-black/10"
                   >
-                    <FaTrash className="size-4 fill-slate-700" />
+                    <FaTrash className="size-4 fill-green-700" />
                     Delete
                   </button>
                 </MenuItem>
@@ -634,7 +641,7 @@ export function PasswordRow({
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <DialogPanel
               transition
-              className="relative w-1/2 max-w-xl transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95"
+              className="relative w-1/2 max-w-xl transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-[closed]:trangreen-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in data-[closed]:sm:trangreen-y-0 data-[closed]:sm:scale-95"
             >
               <div className="px-8 pb-4 pt-6 bg-white">
                 <div className="text-lg">Edit password</div>

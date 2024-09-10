@@ -7,5 +7,5 @@
       "outDir": "dist",
       "strict": true
     },
-    "include": ["backend/**/*", "backend/index.ts"],
+    "include": ["**/*", "index.ts"],
 }

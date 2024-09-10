@@ -10,6 +10,10 @@ const OAuth2 = google.auth.OAuth2;
 dotenv.config();
 const app = express();
 const port = 3001;
+console.log('MYSQL_HOST:', process.env.MYSQL_HOST);
+console.log('MYSQL_USER:', process.env.MYSQL_USER);
+console.log('MYSQL_PASSWORD:', process.env.MYSQL_PASSWORD);
+console.log('MYSQL_DATABASE:', process.env.MYSQL_DATABASE);
 const pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
     user: process.env.MYSQL_USER,

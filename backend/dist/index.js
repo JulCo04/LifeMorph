@@ -70,11 +70,14 @@ function generateVerificationToken() {
     return crypto.randomBytes(20).toString('hex');
 }
 async function sendVerificationEmail(email, verification_token) {
+    const baseUrl = process.env.NODE_ENV === 'production'
+        ? `https://${process.env.PROD_API_ENVIRONMENT}`
+        : `http://localhost:3001`;
     const mailOptions = {
         from: 'adulteasemail@gmail.com',
         to: email,
         subject: 'Email Verification',
-        html: `<p>Click the following link to verify your account: <a href="http://localhost:3001/api/verify?token=${verification_token}">Verify Email</a></p>`
+        html: `<p>Click the following link to verify your account: <a href="${baseUrl}/api/verify?token=${verification_token}">Verify Email</a></p>`
     };
     try {
         await transporter.sendMail(mailOptions);

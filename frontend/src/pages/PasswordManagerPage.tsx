@@ -218,9 +218,9 @@ export function PasswordPage({ userId }: PasswordPageProps) {
 
   function buildPath(route: string) {
     if (process.env.NODE_ENV === "production") {
-      return "http://localhost:3001/" + route;
+      return 'https://' + process.env.REACT_APP_PROD_API_ENVIRONMENT + '/' + route;
     } else {
-      return "http://localhost:3001/" + route;
+      return  "http://localhost:3001/" + route;
     }
   }
 

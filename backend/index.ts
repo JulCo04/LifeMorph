@@ -89,11 +89,15 @@ function generateVerificationToken() {
 }
 
 async function sendVerificationEmail(email: string, verification_token: string): Promise<void> {
+  const baseUrl = process.env.NODE_ENV === 'production'
+    ? `https://${process.env.PROD_API_ENVIRONMENT}`
+    : `http://localhost:3001`;
+
   const mailOptions: nodemailer.SendMailOptions = {
-      from: 'adulteasemail@gmail.com',
-      to: email,
-      subject: 'Email Verification',
-      html: `<p>Click the following link to verify your account: <a href="http://localhost:3001/api/verify?token=${verification_token}">Verify Email</a></p>`
+    from: 'adulteasemail@gmail.com',
+    to: email,
+    subject: 'Email Verification',
+    html: `<p>Click the following link to verify your account: <a href="${baseUrl}/api/verify?token=${verification_token}">Verify Email</a></p>`
   };
 
   try {

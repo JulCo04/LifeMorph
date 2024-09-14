@@ -6,14 +6,17 @@ import nodemailer from 'nodemailer';
 import { google } from 'googleapis';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-const OAuth2 = google.auth.OAuth2;
 dotenv.config();
-const app = express();
-const port = 3001;
 console.log('MYSQL_HOST:', process.env.MYSQL_HOST);
 console.log('MYSQL_USER:', process.env.MYSQL_USER);
 console.log('MYSQL_PASSWORD:', process.env.MYSQL_PASSWORD);
 console.log('MYSQL_DATABASE:', process.env.MYSQL_DATABASE);
+const OAuth2 = google.auth.OAuth2;
+const app = express();
+const port = process.env.PORT || 3001;
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
 const pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
     user: process.env.MYSQL_USER,
@@ -30,7 +33,19 @@ pool.getConnection()
     process.exit(1);
 });
 app.use(express.json());
-app.use(cors());
+// const corsOptions = {
+//   origin: process.env.PRODUCTION_ENVIRONMENT || 'http://localhost:3000', // React app URL or other allowed origins
+//   methods: 'GET,POST,PUT,DELETE', // Specify the methods allowed
+//   credentials: true, // Set to true if you're using cookies or other credentials
+//   optionsSuccessStatus: 200
+// };
+const corsOptions = {
+    origin: '*', // React app URL or other allowed origins
+    methods: 'GET,POST,PUT,DELETE', // Specify the methods allowed
+    credentials: true, // Set to true if you're using cookies or other credentials
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 const oauth2Client = new OAuth2("36696501036-kcinmdfdcbk58l1snuo4csko4lu1qnc3.apps.googleusercontent.com", "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", "https://developers.google.com/oauthplayground" // Redirect URL
 );
 oauth2Client.setCredentials({
@@ -1147,8 +1162,5 @@ app.put('/api/todos/:todoId', async (req, res) => {
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send('Something broke 💩');
-});
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
 });
 //# sourceMappingURL=index.js.map

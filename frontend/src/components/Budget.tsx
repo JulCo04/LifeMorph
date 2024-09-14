@@ -21,7 +21,11 @@ const Budget: React.FC<BudgetProps> = ({ userId }) => {
     const [netActualProfit, setNetActualProfit] = useState<string>('0.00');
 
     function buildPath(route: string) {
-        return 'http://localhost:3001/' + route;
+        if (process.env.NODE_ENV === "production") {
+          return process.env.REACT_APP_PRODUCTION_ENVIRONMENT + route;
+        } else {
+          return  "http://localhost:3001/" + route;
+        }
     }
 
     const fetchIncomeTable = async () => {

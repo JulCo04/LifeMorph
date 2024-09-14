@@ -25,13 +25,13 @@ const TodoListPage: React.FC = () => {
   };
   const dateFormatter = new Intl.DateTimeFormat("en-US", dateOptions);
 
-  const buildPath = (route: string) => {
+  function buildPath(route: string) {
     if (process.env.NODE_ENV === "production") {
-      return "http://localhost:3001/" + route;
+      return process.env.REACT_APP_PRODUCTION_ENVIRONMENT + route;
     } else {
-      return "http://localhost:3001/" + route;
+      return  "http://localhost:3001/" + route;
     }
-  };
+  }
 
   const handleApiResponse = (data: any): Todo[] => {
     return data.map((item: any) => ({

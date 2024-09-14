@@ -39,9 +39,9 @@ const PasswordManagerPage: React.FC = () => {
 
   function buildPath(route: string) {
     if (process.env.NODE_ENV === "production") {
-      return "http://localhost:3001/" + route;
+      return process.env.REACT_APP_PRODUCTION_ENVIRONMENT + route;
     } else {
-      return "http://localhost:3001/" + route;
+      return  "http://localhost:3001/" + route;
     }
   }
 

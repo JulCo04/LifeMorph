@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
-import EventTrackingPage from "./pages/EventTrackingPage";
 import FinancePage from "./pages/FinancePage";
 import ForgotPassPage from "./pages/ForgotPassPage";
 import GoalTrackingPage from "./pages/GoalTrackingPage";
@@ -24,7 +23,6 @@ const App: React.FC = () => {
         <Route path="/" index element={<HomePage />} />
         <Route path="/dashboard" index element={<DashboardPage />} />
         <Route path="/login" index element={<LoginPage />} />
-        <Route path="/event-tracking" element={<EventTrackingPage />} />
         <Route path="/finance" element={<FinancePage />} />
         <Route path="/forgot-password" element={<ForgotPassPage />} />
         <Route path="/goal-tracking" element={<GoalTrackingPage />} />

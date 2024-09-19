@@ -8,9 +8,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/JulCo04/LifeMorph">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a>
+  <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/butterfly.ICO" alt="Icon" style="max-width: 45%; height: auto; border-radius: 8px; margin: 10px;">
 
 <h3 align="center">LifeMorph</h3>
 
@@ -19,81 +17,78 @@
     <br />
     Personal hub for young adults: Simplify your adult life with a dashboard that includes a spending tracker, budget planner, contact manager, goal tracker, to-do lists, and password manager.
     <br />
-    <a href="https://github.com/JulCo04/LifeMorph"><strong>Explore the docs »</strong></a>
     <br />
-    <br />
-    <a href="https://github.com/JulCo04/LifeMorph">View Demo</a>
+<!--     <a href="https://github.com/JulCo04/LifeMorph">View Demo</a>
     ·
     <a href="https://github.com/JulCo04/LifeMorph/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    ·
+    · -->
     <a href="https://github.com/JulCo04/LifeMorph/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
   </p>
 </div>
-
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
-
-
-
-<!-- ABOUT THE PROJECT -->
-## About The Project
-
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Built With
 
 [![React][React.js]][React-url]
 
+<!-- Pages -->
+## Pages
+<details>
+  <summary>Dashboard</summary>
+  <div style="text-align: center;">
+    <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/Dashboard.PNG" alt="Dashboard" style="max-width: 80%; height: auto; border-radius: 8px; margin-bottom: 20px;">
+  </div>
+</details>
 
-<!-- USAGE EXAMPLES -->
-## Usage
+<details>
+  <summary>Finance</summary>
+  <div style="text-align: center;">
+    <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/Finance1.PNG" alt="Finance1" style="max-width: 45%; height: auto; border-radius: 8px; margin: 10px;">
+    <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/Finance2.PNG" alt="Finance2" style="max-width: 45%; height: auto; border-radius: 8px; margin: 10px;">
+  </div>
+</details>
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+<details>
+  <summary>Lists</summary>
+  <div style="text-align: center;">
+    <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/Lists.PNG" alt="Lists" style="max-width: 50%; height: auto; border-radius: 8px; margin: 10px;">
+  </div>
+</details>
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+<details>
+  <summary>Contact Manager</summary>
+  <div style="text-align: center;">
+    <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/Contacts1.PNG" alt="Contacts1" style="max-width: 45%; height: auto; border-radius: 8px; margin: 10px;">
+    <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/Contacts2.PNG" alt="Contacts2" style="max-width: 45%; height: auto; border-radius: 8px; margin: 10px;">
+  </div>
+</details>
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+<details>
+  <summary>Goal Tracker</summary>
+  <div style="text-align: center;">
+    <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/Goals1.PNG" alt="Goals1" style="max-width: 45%; height: auto; border-radius: 8px; margin: 10px;">
+    <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/Goals2.PNG" alt="Goals2" style="max-width: 45%; height: auto; border-radius: 8px; margin: 10px;">
+  </div>
+</details>
 
-<!-- ROADMAP -->
-## Roadmap
+<details>
+  <summary>Password Manager</summary>
+  <div style="text-align: center;">
+    <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/Password1.PNG" alt="Password1" style="max-width: 45%; height: auto; border-radius: 8px; margin: 10px;">
+    <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/Password2.PNG" alt="Password2" style="max-width: 45%; height: auto; border-radius: 8px; margin: 10px;">
+    <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/Password3.PNG" alt="Password3" style="max-width: 45%; height: auto; border-radius: 8px; margin: 10px;">
+  </div>
+</details>
 
-- [ ] Feature 1
-- [ ] Feature 2
-- [ ] Feature 3
-    - [ ] Nested Feature
+<!-- FUTURE UPDATES -->
+## Future Updates
+We have exciting new features planned for LifeMorph:
 
-See the [open issues](https://github.com/JulCo04/LifeMorph/issues) for a full list of proposed features (and known issues).
-
-### Top contributors:
-
-<a href="https://github.com/JulCo04/LifeMorph/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=JulCo04/LifeMorph" alt="contrib.rocks image" />
-</a>
+- **Widgets with Data**: Keep track of important information at a glance with customizable widgets.
+- **Notifications for Upcoming Birthdays**: Never miss an important date with our birthday reminder feature.
+- **Upcoming Goals and To-Dos**: Stay organized with notifications and reminders for your goals and tasks.
+- **Calendar Page**: A dedicated calendar page to manage your schedule and events.
+- **Customizable Theme**: Personalize your experience with a theme that suits your style.
+- **AI Search Bot**: Enhance your interaction with an AI-powered search assistant.
 
 <!-- CONTACT -->
 ## Contact

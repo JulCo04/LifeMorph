@@ -8,8 +8,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/butterfly.ICO" alt="Icon" style="max-width: 45%; height: auto; border-radius: 8px; margin: 10px;">
-
+  <img src="https://github.com/JulCo04/LifeMorph/blob/main/rm_images/butterfly.ico" alt="Icon" style="width: 125px; height: auto;">
 <h3 align="center">LifeMorph</h3>
 
   <p align="center">

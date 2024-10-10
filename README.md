@@ -12,7 +12,7 @@
 <h3 align="center">LifeMorph</h3>
 
   <p align="center">
-    Website: https://lifemorph.site
+<!--     Website: https://lifemorph.site -->
     <br />
     Personal hub for young adults: Simplify your adult life with a dashboard that includes a spending tracker, budget planner, contact manager, goal tracker, to-do lists, and password manager.
     <br />
